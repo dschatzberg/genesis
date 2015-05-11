@@ -14,7 +14,48 @@
 # along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 -include config.mk
 
-.PHONY: toolchain
+ARCH ?= x86_64
+
+ARCHDIR := $(CURDIR)/src/arch/$(ARCH)
+
+TOOLCHAIN_TARGET ?= $(ARCH)-elf
+
+TOOLCHAIN_DIR ?= $(CURDIR)/toolchain/install
+
+CROSSAS ?= $(TOOLCHAIN_DIR)/bin/$(TOOLCHAIN_TARGET)-as
+CROSSLD ?= $(TOOLCHAIN_DIR)/bin/$(TOOLCHAIN_TARGET)-ld
+
+MKDIR ?= mkdir
+
+LDFLAGS ?= -z max-page-size=0x1000
+
+BUILDDIR ?= $(CURDIR)/build
+
+ifeq ($(DEBUG),1)
+  ASFLAGS ?= -g
+else
+  LDFLAGS += --strip-debug
+endif
+
+OBJS :=
+
+include $(ARCHDIR)/Makefile.in
+
+.PHONY: all clean toolchain
+
+all: $(BUILDDIR)/kernel.elf
+
+clean:
+	-$(RM) $(wildcard $(OBJS) $(BUILDDIR)/kernel.elf)
 
 toolchain:
 	$(MAKE) -C toolchain
+
+$(BUILDDIR):
+	$(MKDIR) $(BUILDDIR)
+
+$(BUILDDIR)/%.o: $(ARCHDIR)/%.s Makefile | $(BUILDDIR)
+	$(CROSSAS) $(ASFLAGS) -o $@ $<
+
+$(BUILDDIR)/kernel.elf: $(LDSCRIPT) $(OBJS) Makefile | $(BUILDDIR)
+	$(CROSSLD) $(LDFLAGS) -o $@ -T $(LDSCRIPT) $(OBJS)
