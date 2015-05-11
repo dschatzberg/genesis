@@ -217,6 +217,8 @@ boot64:
         movq $0, boot_pml4
         invlpg 0
 
+        call arch_init
+
 .Lhang:
         cli
         hlt

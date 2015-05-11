@@ -18,38 +18,53 @@ ARCH ?= x86_64
 
 ARCHDIR := $(CURDIR)/src/arch/$(ARCH)
 
+TARGET_SPEC ?= $(ARCHDIR)/target.json
+
+TARGET_DIR ?= $(CURDIR)/target
+
 TOOLCHAIN_TARGET ?= $(ARCH)-elf
 
 TOOLCHAIN_DIR ?= $(CURDIR)/toolchain/install
 
 CROSSAS ?= $(TOOLCHAIN_DIR)/bin/$(TOOLCHAIN_TARGET)-as
 CROSSLD ?= $(TOOLCHAIN_DIR)/bin/$(TOOLCHAIN_TARGET)-ld
+CARGO ?= cargo
 
 MKDIR ?= mkdir
 
-LDFLAGS ?= -z max-page-size=0x1000
+LDFLAGS ?= -z max-page-size=0x1000 --gc-sections
 
 BUILDDIR ?= $(CURDIR)/build
 
 ifeq ($(DEBUG),1)
   ASFLAGS ?= -g
+  GENESISLIB := $(TARGET_DIR)/target/debug/libgenesis.a
 else
+  CARGOFLAGS := --release
   LDFLAGS += --strip-debug
+  GENESISLIB := $(TARGET_DIR)/target/release/libgenesis.a
 endif
 
 OBJS :=
 
 include $(ARCHDIR)/Makefile.in
 
-.PHONY: all clean toolchain
+.PHONY: all clean core $(GENESISLIB) toolchain
 
 all: $(BUILDDIR)/kernel.elf
 
 clean:
+	$(CARGO) clean
 	-$(RM) $(wildcard $(OBJS) $(BUILDDIR)/kernel.elf)
+
+core:
+	$(MAKE) -C ext/core
 
 toolchain:
 	$(MAKE) -C toolchain
+
+$(GENESISLIB): core Makefile
+	$(CARGO) build $(CARGOFLAGS) --target=$(TARGET_SPEC)
 
 $(BUILDDIR):
 	$(MKDIR) $(BUILDDIR)
@@ -57,5 +72,5 @@ $(BUILDDIR):
 $(BUILDDIR)/%.o: $(ARCHDIR)/%.s Makefile | $(BUILDDIR)
 	$(CROSSAS) $(ASFLAGS) -o $@ $<
 
-$(BUILDDIR)/kernel.elf: $(LDSCRIPT) $(OBJS) Makefile | $(BUILDDIR)
-	$(CROSSLD) $(LDFLAGS) -o $@ -T $(LDSCRIPT) $(OBJS)
+$(BUILDDIR)/kernel.elf: $(LDSCRIPT) $(OBJS) $(GENESISLIB) Makefile | $(BUILDDIR)
+	$(CROSSLD) $(LDFLAGS) -o $@ -T $(LDSCRIPT) $(OBJS) $(GENESISLIB)
