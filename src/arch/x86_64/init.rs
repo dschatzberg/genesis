@@ -12,8 +12,14 @@
 
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
+use super::serial;
 
 #[no_mangle]
-pub extern fn arch_init() {
+#[allow(unused_must_use)]
+pub extern fn arch_init() -> ! {
+    unsafe {
+        serial::init();
+        writeln!(serial::get(), "Hello World");
+    }
     loop {}
 }

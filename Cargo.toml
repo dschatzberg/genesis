@@ -10,5 +10,5 @@ license = "AGPL-1.0"
 name = "genesis"
 crate-type = ["staticlib"]
 
-[dependencies.core]
-path = "ext/core"
+[dependencies]
+rlibc = "*"

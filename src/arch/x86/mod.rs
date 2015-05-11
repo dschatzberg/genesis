@@ -12,6 +12,5 @@
 
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
-pub use super::x86::serial;
-
-pub mod init;
+pub mod serial;
+mod ioport;

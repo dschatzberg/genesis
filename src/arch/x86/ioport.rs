@@ -12,6 +12,21 @@
 
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
-pub use super::x86::serial;
 
-pub mod init;
+pub unsafe fn out<T>(port: u16, val: T) {
+        asm!("out $0, $1"
+             : // no output
+             : "{al}" (val), "{dx}" (port)
+             : // no clobber
+             : "volatile");
+}
+
+pub unsafe fn inb(port: u16) -> u8 {
+    let mut val: u8;
+        asm!("in $1, $0"
+             : "={al}" (val)
+             : "{dx}" (port)
+             : // no clobber
+             : "volatile");
+    val
+}

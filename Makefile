@@ -18,7 +18,7 @@ ARCH ?= x86_64
 
 ARCHDIR := $(CURDIR)/src/arch/$(ARCH)
 
-TARGET_SPEC ?= $(ARCHDIR)/target.json
+TARGET ?= $(ARCH)-unknown-linux-gnu
 
 TARGET_DIR ?= $(CURDIR)/target
 
@@ -38,18 +38,18 @@ BUILDDIR ?= $(CURDIR)/build
 
 ifeq ($(DEBUG),1)
   ASFLAGS ?= -g
-  GENESISLIB := $(TARGET_DIR)/target/debug/libgenesis.a
+  GENESISLIB := $(TARGET_DIR)/$(TARGET)/debug/libgenesis.a
 else
   CARGOFLAGS := --release
   LDFLAGS += --strip-debug
-  GENESISLIB := $(TARGET_DIR)/target/release/libgenesis.a
+  GENESISLIB := $(TARGET_DIR)/$(TARGET)/release/libgenesis.a
 endif
 
 OBJS :=
 
 include $(ARCHDIR)/Makefile.in
 
-.PHONY: all clean core $(GENESISLIB) toolchain
+.PHONY: all clean $(GENESISLIB) toolchain
 
 all: $(BUILDDIR)/kernel.elf
 
@@ -57,14 +57,11 @@ clean:
 	$(CARGO) clean
 	-$(RM) $(wildcard $(OBJS) $(BUILDDIR)/kernel.elf)
 
-core:
-	$(MAKE) -C ext/core
-
 toolchain:
 	$(MAKE) -C toolchain
 
-$(GENESISLIB): core Makefile
-	$(CARGO) build $(CARGOFLAGS) --target=$(TARGET_SPEC)
+$(GENESISLIB): Makefile
+	$(CARGO) build $(CARGOFLAGS) --target=$(TARGET)
 
 $(BUILDDIR):
 	$(MKDIR) $(BUILDDIR)

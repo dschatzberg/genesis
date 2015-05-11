@@ -15,5 +15,11 @@
 #[cfg(target_arch = "x86_64")]
 pub use self::x86_64::init;
 
+#[cfg(any(target_arch = "x86",target_arch = "x86_64"))]
+pub use self::x86::serial;
+
+#[cfg(any(target_arch = "x86",target_arch = "x86_64"))]
+mod x86;
+
 #[cfg(target_arch = "x86_64")]
 pub mod x86_64;
