@@ -17,21 +17,21 @@
 use core::prelude::*;
 use super::ioport;
 
-static PORT_BASE: u16 = 0x3F8;
+const PORT_BASE: u16 = 0x3F8;
 // when DLAB = 0
-static DATA_REG: u16 = 0;
-static INT_ENABLE: u16 = 1;
+const DATA_REG: u16 = 0;
+const INT_ENABLE: u16 = 1;
 
 // when DLAB = 1
-static BAUD_DIV_LSB: u16 = 0;
-static BAUD_DIV_MSB: u16 = 1;
+const BAUD_DIV_LSB: u16 = 0;
+const BAUD_DIV_MSB: u16 = 1;
 
-static LINE_CTRL_REG: u16 = 3;
-static LINE_CTRL_REG_CHARLEN8: u8 = 1 << 0 | 1 << 1;
-static LINE_CTRL_REG_DLAB: u8 = 1 << 7;
+const LINE_CTRL_REG: u16 = 3;
+const LINE_CTRL_REG_CHARLEN8: u8 = 1 << 0 | 1 << 1;
+const LINE_CTRL_REG_DLAB: u8 = 1 << 7;
 
-static LINE_STATUS_REG: u16 = 5;
-static LINE_STATUS_REG_THR_EMPTY: u8 = 1 << 5;
+const LINE_STATUS_REG: u16 = 5;
+const LINE_STATUS_REG_THR_EMPTY: u8 = 1 << 5;
 
 pub unsafe fn init() {
     ioport::out(PORT_BASE + INT_ENABLE, 0u8); // disable interrupts
