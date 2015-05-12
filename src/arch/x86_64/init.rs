@@ -15,11 +15,10 @@
 use super::serial;
 
 #[no_mangle]
-#[allow(unused_must_use)]
 pub extern fn arch_init() -> ! {
     unsafe {
         serial::init();
-        writeln!(serial::get(), "Hello World");
+        let _ = writeln!(serial::get(), "Hello World");
     }
     loop {}
 }
