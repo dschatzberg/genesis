@@ -14,7 +14,6 @@
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 #![allow(dead_code)]
 
-use core::fmt;
 use core::prelude::*;
 use super::ioport;
 
@@ -56,19 +55,8 @@ unsafe fn putc(c: u8) {
     ioport::out(PORT_BASE + DATA_REG, c);
 }
 
-struct Serial;
-
-impl fmt::Write for Serial {
-    fn write_str(&mut self, s: &str) -> fmt::Result {
-        for c in s.bytes() {
-            unsafe { putc(c) };
-        }
-        Ok(())
+pub unsafe fn write_str(s: &str) {
+    for c in s.bytes() {
+        putc(c);
     }
-}
-
-static mut COM0: Serial = Serial;
-
-pub unsafe fn get() -> &'static mut fmt::Write {
-    &mut COM0
 }

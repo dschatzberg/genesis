@@ -18,7 +18,7 @@ use super::serial;
 pub extern fn arch_init() -> ! {
     unsafe {
         serial::init();
-        let _ = writeln!(serial::get(), "Hello World");
+        serial::write_str("Hello World\n");
     }
     loop {}
 }
