@@ -26,4 +26,11 @@ mod arch;
 mod console {
     pub use arch::serial::*;
 }
+
 mod unwind;
+
+#[allow(non_snake_case)]
+#[no_mangle]
+pub extern fn _Unwind_Resume() -> ! {
+    loop {}
+}

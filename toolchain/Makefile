@@ -1,20 +1,6 @@
-# This file is part of Genesis.
-
-# Genesis is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# Genesis is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-
-# You should have received a copy of the GNU Affero General Public License
-# along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 BINUTILS-VERSION ?= 2.25
 
-TARGET ?= x86_64-elf
+TARGET_TRIPLE ?= x86_64-none-elf
 
 SRCDIR := $(CURDIR)/src
 BUILDDIR := $(CURDIR)/build
@@ -25,7 +11,7 @@ BINUTILS-TAR := binutils-$(BINUTILS-VERSION).tar.bz2
 BINUTILS-TAR-PATH := $(SRCDIR)/$(BINUTILS-TAR)
 
 TOOLCHAIN-TAR ?= genesis-toolchain.tar.bz2
-TOOLCHAIN-TAR-URL ?= https://github.com/dschatzberg/genesis/releases/download/toolchain-v0.0.1/$(TOOLCHAIN-TAR)
+TOOLCHAIN-TAR-URL ?= https://github.com/dschatzberg/genesis/releases/download/toolchain-v0.0.2/$(TOOLCHAIN-TAR)
 
 BINUTILS-URL ?= ftp://ftp.gnu.org/gnu/binutils/$(BINUTILS-TAR)
 
@@ -56,7 +42,7 @@ clean:
 # fetch tar
 
 $(TOOLCHAIN-TAR):
-	$(WGET) $(TOOLCHAIN-TAR-URL)
+	$(WGET) $(TOOLCHAIN-TAR-URL) -N -nv
 
 # General directories
 
@@ -88,7 +74,7 @@ $(BINUTILS-BUILDDIR): | $(BUILDDIR)
 
 $(BINUTILS-BUILDDIR)/Makefile: $(BINUTILS-SRCDIR)/configure | $(BINUTILS-BUILDDIR)
 	$(CD) $(BINUTILS-BUILDDIR) && $(BINUTILS-SRCDIR)/configure \
-		--target=$(TARGET) \
+		--target=$(TARGET_TRIPLE) \
 		--prefix=$(INSTALLDIR) --enable-static --disable-shared \
 		--disable-nls --disable-werror
 
