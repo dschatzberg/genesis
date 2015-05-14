@@ -4,12 +4,8 @@
     "target-endian": "little",
     "target-pointer-width": "64",
     "os": "genesis",
-    "env": "genesis",
+    "env": "kernel",
     "arch": "x86_64",
-    "linker": "x86_64-elf-ld",
-    "executables": true,
-    "pre_link_args": "-T src/arch/x86_64/linkerscript.ld",
-    "exe_suffix" : ".elf",
-    "linker_is_gnu" : true,
+    "code-model": "kernel",
     "no-compiler-rt": true
 }
