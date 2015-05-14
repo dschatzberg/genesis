@@ -82,9 +82,6 @@ boot_gdt_desc:
         .short boot_gdt_end - boot_gdt - 1
         .quad boot_gdt
 
-boot_rust_stack_check:
-        .quad boot_stack_bottom
-
 .section .boot_data, "a", @progbits
 
 .align 16
@@ -220,13 +217,6 @@ boot64:
         // unmap lower memory and invlpg
         movq $0, boot_pml4
         invlpg 0
-
-        // Set FSBASE so that rust stack checking works
-        mov $0xC0000100, %ecx
-        lea boot_rust_stack_check - 0x70, %rax
-        mov %rax, %rdx
-        shr $32, %rdx
-        wrmsr
 
         // Call into rust
         call arch_init
