@@ -189,6 +189,7 @@ boot64_trampoline:
         .cfi_def_cfa %rsp, 0
         .cfi_undefined %rip
 
+        // jump to higher half
         lea boot64, %rax
         jmp *%rax
 
