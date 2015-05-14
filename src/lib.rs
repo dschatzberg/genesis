@@ -22,11 +22,9 @@ extern crate rlibc;
 pub use self::arch::init as arch_init;
 
 mod arch;
-
 mod console {
     pub use arch::serial::*;
 }
-
 mod unwind;
 
 #[allow(non_snake_case)]
