@@ -18,7 +18,7 @@ use super::serial;
 pub extern fn arch_init() -> ! {
     unsafe {
         serial::init();
-        serial::write_str("Hello World\n");
     }
+    debug!("Serial Initialized");
     loop {}
 }

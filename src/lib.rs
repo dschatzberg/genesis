@@ -21,14 +21,11 @@ extern crate rlibc;
 
 pub use self::arch::init as arch_init;
 
+#[macro_use]
+mod log;
+
 mod arch;
 mod console {
     pub use arch::serial::*;
 }
 mod unwind;
-
-#[allow(non_snake_case)]
-#[no_mangle]
-pub extern fn _Unwind_Resume() -> ! {
-    loop {}
-}
