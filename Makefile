@@ -49,11 +49,10 @@ rparen := )
 ASFLAGS ?=
 CARGOFLAGS ?=
 LDFLAGS ?= -z max-page-size=0x1000 --gc-sections
-RUSTCFLAGS ?=
+RUSTCFLAGS ?= -Z no-landing-pads -C code-model=kernel -C soft-float -C target-feature=-3dnow,-avx,-avx2,-sse,-sse2,-sse3,-sse4.1,-sse4.2,-mmx
 
 ifeq ($(DEBUG),1)
 ASFLAGS += -g
-RUSTCFLAGS += -g
 else
 CARGOFLAGS += --release
 LDFLAGS += --strip-debug
@@ -93,7 +92,7 @@ $(BUILD_DIR)/%.o: $(ARCH_DIR)/%.s Makefile | $(BUILD_DIR)
 	$(CROSSAS) $(ASFLAGS) -o $@ $<
 
 kernel_lib: core
-	$(CARGO) build --target=$(TARGET_SPEC)
+	$(CARGO) build $(CARGOFLAGS) --target=$(TARGET_SPEC)
 
 $(KERNEL): $(OBJS) kernel_lib $(LDSCRIPT) Makefile | $(BUILD_DIR)
 	$(CROSSLD) $(LDFLAGS) -o $@ -T $(LDSCRIPT) $(OBJS) $(KERNEL_LIB)
@@ -124,7 +123,7 @@ dist-clean: clean-cargo clean-core clean-kernel clean-objs clean-toolchain
 core: $(CORE_LIB)
 
 $(CORE_LIB): $(CORE_DIR)/src/lib.rs $(TARGET_SPEC) Makefile | $(BUILD_DIR)
-	$(RUSTC) --target=$(TARGET_SPEC) -o $@ $<
+	$(RUSTC) $(RUSTCFLAGS) --target=$(TARGET_SPEC) -o $@ $<
 
 
 $(CORE_DIR)/src/lib.rs: $(CORE_DIR)/$(RUSTC_SRC_TAR)

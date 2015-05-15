@@ -3,4 +3,4 @@ pushd `dirname $0` > /dev/null
 SCRIPTPATH=`pwd`
 popd > /dev/null
 export PATH=`echo $PATH | sed -e "s|$SCRIPTPATH:||"`
-rustc -L $CORE_LIB_PATH $*
+rustc -Z no-landing-pads -C soft-float -L $CORE_LIB_PATH $*

@@ -6,6 +6,7 @@
     "os": "genesis",
     "env": "kernel",
     "arch": "x86_64",
+    "features": "-3dnow,-avx,-avx2,-mmx,-sse,-sse2,-sse3,-sse4.1,-sse4.2,-sse4a,-ssse3",
     "code-model": "kernel",
     "no-compiler-rt": true
 }
