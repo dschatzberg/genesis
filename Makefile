@@ -49,8 +49,7 @@ rparen := )
 ASFLAGS ?=
 CARGOFLAGS ?=
 LDFLAGS ?= -z max-page-size=0x1000 --gc-sections
-RUSTCFLAGS ?= -Z no-landing-pads -C code-model=kernel -C soft-float -C target-feature=-3dnow,-avx,-avx2,-sse,-sse2,-sse3,-sse4.1,-sse4.2,-mmx
-
+RUSTCFLAGS ?= -C code-model=kernel -C no-vectorize-loops -C no-vectorize-slp
 ifeq ($(DEBUG),1)
 ASFLAGS += -g
 else
@@ -125,8 +124,10 @@ core: $(CORE_LIB)
 $(CORE_LIB): $(CORE_DIR)/src/lib.rs $(TARGET_SPEC) Makefile | $(BUILD_DIR)
 	$(RUSTC) $(RUSTCFLAGS) --target=$(TARGET_SPEC) -o $@ $<
 
+$(CORE_DIR)/src:
+	$(MKDIR) -p $(CORE_DIR)/src
 
-$(CORE_DIR)/src/lib.rs: $(CORE_DIR)/$(RUSTC_SRC_TAR)
+$(CORE_DIR)/src/lib.rs: $(CORE_DIR)/$(RUSTC_SRC_TAR) | $(CORE_DIR)/src
 	$(TAR) xf $< -C $(CORE_DIR)/src $(RUSTC_PREFIX)/src/libcore --strip 3 -m
 
 $(CORE_DIR)/$(RUSTC_SRC_TAR):
