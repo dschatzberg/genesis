@@ -122,7 +122,7 @@ dist-clean: clean-cargo clean-core clean-kernel clean-objs clean-toolchain
 core: $(CORE_LIB)
 
 $(CORE_LIB): $(CORE_DIR)/src/lib.rs $(TARGET_SPEC) Makefile | $(BUILD_DIR)
-	$(RUSTC) $(RUSTCFLAGS) --target=$(TARGET_SPEC) -o $@ $<
+	$(RUSTC) -O $(RUSTCFLAGS) --target=$(TARGET_SPEC) -o $@ $<
 
 $(CORE_DIR)/src:
 	$(MKDIR) -p $(CORE_DIR)/src
