@@ -49,7 +49,7 @@ rparen := )
 ASFLAGS ?=
 CARGOFLAGS ?=
 LDFLAGS ?= -z max-page-size=0x1000 --gc-sections
-RUSTCFLAGS ?= -C code-model=kernel -C no-vectorize-loops -C no-vectorize-slp
+RUSTCFLAGS ?=
 ifeq ($(DEBUG),1)
 ASFLAGS += -g
 else
