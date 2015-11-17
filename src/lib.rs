@@ -12,11 +12,9 @@
 
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
-#![feature(asm, core, core_prelude, core_str_ext, lang_items, no_std)]
+#![feature(asm, core_str_ext, lang_items, no_std)]
 #![no_std]
 
-#[macro_use]
-extern crate core;
 extern crate rlibc;
 
 pub use self::arch::init as arch_init;

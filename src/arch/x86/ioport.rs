@@ -22,7 +22,7 @@ pub unsafe fn out<T>(port: u16, val: T) {
 }
 
 pub unsafe fn inb(port: u16) -> u8 {
-    let mut val: u8;
+    let val: u8;
         asm!("in $1, $0"
              : "={al}" (val)
              : "{dx}" (port)

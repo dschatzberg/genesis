@@ -14,7 +14,6 @@
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 #![allow(dead_code)]
 
-use core::prelude::*;
 use super::ioport;
 
 const PORT_BASE: u16 = 0x3F8;

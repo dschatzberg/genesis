@@ -12,13 +12,13 @@
 
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
-use core::prelude::*;
 use core::fmt::{self, Write};
 use super::console;
 
 #[macro_use]
 pub mod macros;
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum Level {
     Error,
@@ -40,6 +40,7 @@ impl fmt::Display for Level {
         write!(f, "{}", s)
     }
 }
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct Record<'a> {
     pub location: Location,
