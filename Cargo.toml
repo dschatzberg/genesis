@@ -5,10 +5,15 @@ authors = ["Dan Schatzberg <schatzberg.dan@gmail.com>"]
 repository = "https://github.com/dschatzberg/genesis"
 homepage = "https://github.com/dschatzberg/genesis"
 license = "AGPL-1.0"
+readme = "README.md"
+documentation = "https://dschatzberg.github.io/genesis"
+description = "Genesis Microkernel"
+keywords = ["operating system", "kernel", "nostd"]
 
 [lib]
 name = "genesis"
 crate-type = ["staticlib"]
 
 [dependencies]
+clippy = "0.0.23"
 rlibc = "0.1"

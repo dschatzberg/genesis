@@ -12,8 +12,16 @@
 
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
-#![feature(asm, core_str_ext, lang_items, no_std)]
+//! The Genesis Microkernel.
+#![feature(asm, core_str_ext, lang_items, plugin, no_std)]
+#![plugin(clippy)]
 #![no_std]
+
+#![allow(empty_loop)]
+#![deny(missing_docs,
+        missing_debug_implementations, missing_copy_implementations,
+        trivial_casts, trivial_numeric_casts,
+        unused_import_braces, unused_qualifications)]
 
 extern crate rlibc;
 

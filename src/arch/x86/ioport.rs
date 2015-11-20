@@ -14,7 +14,7 @@
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 
 pub unsafe fn out<T>(port: u16, val: T) {
-        asm!("out $0, $1"
+    asm!("out $0, $1"
              : // no output
              : "{al}" (val), "{dx}" (port)
              : // no clobber
@@ -23,7 +23,7 @@ pub unsafe fn out<T>(port: u16, val: T) {
 
 pub unsafe fn inb(port: u16) -> u8 {
     let val: u8;
-        asm!("in $1, $0"
+    asm!("in $1, $0"
              : "={al}" (val)
              : "{dx}" (port)
              : // no clobber

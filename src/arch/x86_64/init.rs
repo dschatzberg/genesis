@@ -14,8 +14,9 @@
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 use super::serial;
 
+/// Initial Rust entry point.
 #[no_mangle]
-pub extern fn arch_init() -> ! {
+pub extern "C" fn arch_init() -> ! {
     unsafe {
         serial::init();
     }

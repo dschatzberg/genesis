@@ -26,7 +26,7 @@ const BAUD_DIV_LSB: u16 = 0;
 const BAUD_DIV_MSB: u16 = 1;
 
 const LINE_CTRL_REG: u16 = 3;
-const LINE_CTRL_REG_CHARLEN8: u8 = 1 << 0 | 1 << 1;
+const LINE_CTRL_REG_CHARLEN8: u8 = 1 | 1 << 1;
 const LINE_CTRL_REG_DLAB: u8 = 1 << 7;
 
 const LINE_STATUS_REG: u16 = 5;

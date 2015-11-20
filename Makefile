@@ -20,7 +20,7 @@ TARGET_TRIPLE ?= $(ARCH)-none-elf
 
 # Directories
 ARCH_DIR ?= $(CURDIR)/src/arch/$(ARCH)
-BUILD_DIR ?= $(CURDIR)/build
+BUILD_DIR ?= $(CURDIR)/build/$(ARCH)
 ifeq ($(DEBUG),1)
 CARGO_OUT_DIR ?= $(CURDIR)/target/target/debug
 else

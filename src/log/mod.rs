@@ -25,7 +25,7 @@ pub enum Level {
     Warn,
     Info,
     Debug,
-    Trace
+    Trace,
 }
 
 impl fmt::Display for Level {
@@ -59,7 +59,7 @@ pub struct Location {
 
 struct Logger;
 
-impl fmt::Write for Logger {
+impl Write for Logger {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         unsafe { console::write_str(s) };
         Ok(())
