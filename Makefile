@@ -85,7 +85,7 @@ export CORE_LIB_PATH := $(BUILD_DIR)
 all: $(KERNEL)
 
 $(BUILD_DIR):
-	$(MKDIR) $(BUILD_DIR)
+	$(MKDIR) -p $(BUILD_DIR)
 
 $(BUILD_DIR)/%.o: $(ARCH_DIR)/%.s Makefile | $(BUILD_DIR)
 	$(CROSSAS) $(ASFLAGS) -o $@ $<
