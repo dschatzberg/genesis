@@ -13,9 +13,7 @@ before_script:
   export PATH=$HOME/.local/bin:$PATH
 script:
 - |
-  travis-cargo build &&
-  travis-cargo test &&
-  travis-cargo bench &&
+  make &&
   travis-cargo doc
 after_success:
 - travis-cargo doc-upload
