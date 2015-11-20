@@ -1,4 +1,4 @@
-// This file is part of Genesis.
+// Copyright Dan Schatzberg, 2015. This file is part of Genesis.
 
 // Genesis is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
