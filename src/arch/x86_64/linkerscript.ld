@@ -23,13 +23,12 @@ mb_flags = 0x3;
 mb_checksum = -(mb_magic + mb_flags);
 
 KERNEL_LMA = 1 << 20;
-KERNEL_PHYS_MAP = 0xFFFFFFFF80000000;
+KERNEL_PHYS_MAP = 0xFFFFFFFFC0000000;
 
 SECTIONS {
          /* Lower half */
          . = KERNEL_LMA;
 
-         bstart = .;
          .mb_header : {
            LONG(mb_magic)
            LONG(mb_flags)
@@ -44,12 +43,10 @@ SECTIONS {
            *(.boot_text*)
          }
 
-         bend = ALIGN(4k);
-
          /* Higher half */
          . = . + KERNEL_PHYS_MAP;
 
-         .text : AT(ADDR(.text) - KERNEL_PHYS_MAP) {
+         .text ALIGN(4K) : AT(ADDR(.text) - KERNEL_PHYS_MAP) {
            btext = .;
            *(.text*)
          }
@@ -74,7 +71,6 @@ SECTIONS {
 
          kend = ALIGN(4K);
          edata = .;
-
 
          .debug_abbrev 0 : { KEEP(*(.debug_abbrev)) }
          .debug_arranges 0 : { KEEP(*(.debug_arranges)) }

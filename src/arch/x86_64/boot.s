@@ -14,7 +14,7 @@
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 
 .set BOOT_START_PHYS, 0x100010 // 16 bytes for multiboot header
-.set PHYS_VIRT_OFFSET, 0xffffffff80000000
+.set PHYS_VIRT_OFFSET, 0xffffffffC0000000
 
 // Initial Stack
 .bss
@@ -41,11 +41,10 @@ boot_pdpt_low:
         .endr
 boot_pdpt_high:
         .quad boot_pd - PHYS_VIRT_OFFSET + 0x3
-        .rept 509
+        .rept 510
         .quad 0
         .endr
         .quad boot_pd - PHYS_VIRT_OFFSET + 0x3
-        .quad 0
 boot_pd:
         index = 0
         .rept 512
