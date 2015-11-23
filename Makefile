@@ -140,3 +140,5 @@ toolchain:
 # misc
 print-%:
 	@echo $* = $($*)
+
+-include Makefile.in
