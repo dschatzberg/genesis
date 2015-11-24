@@ -13,10 +13,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 use super::serial;
-use core::mem::transmute;
+use core::mem::{size_of, transmute};
 use core::slice;
 use mem::PAddr;
-use multiboot::{self, Multiboot};
+use multiboot::{self, MemoryType, Multiboot};
+use fixedvec::FixedVec;
 
 unsafe fn early_paddr_to_slice<'a>(p: multiboot::PAddr,
                                    sz: usize)
@@ -28,6 +29,16 @@ unsafe fn early_paddr_to_slice<'a>(p: multiboot::PAddr,
         None
     }
 }
+
+#[derive(Clone, Copy, Debug, Default)]
+struct MemoryRegion {
+    start: PAddr,
+    end: PAddr,
+}
+
+const REGIONS_SIZE: usize = 4096;
+
+static mut regions: [u8; REGIONS_SIZE] = [0; REGIONS_SIZE];
 
 /// Initial Rust entry point.
 #[no_mangle]
@@ -43,8 +54,31 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
              .expect("Could not access a Multiboot structure");
     let mem_regions = mb.memory_regions()
                         .expect("Could not find Multiboot memory map");
+
+    let region_slice = unsafe {
+        let ptr = transmute(regions.as_mut_ptr());
+        let sz = REGIONS_SIZE / size_of::<MemoryRegion>();
+        slice::from_raw_parts_mut(ptr, sz)
+    };
+    // FIXME(dschatz): this cannot be stored on the stack
+    let mut vec = FixedVec::new(region_slice);
+
     for region in mem_regions {
-        info!("Multiboot Region {:#?}", region);
+        let start = PAddr::from_u64(region.base_address());
+        let end = PAddr::from_u64(region.base_address() + region.length());
+        let mem_type = match region.memory_type() {
+            MemoryType::RAM => "RAM",
+            MemoryType::Unusable => "Unusable",
+        };
+        info!("{:#17X} - {:#17X}: {}", start, end, mem_type);
+        if region.memory_type() == MemoryType::RAM {
+            if let Err(e) = vec.push(MemoryRegion {
+                start: start,
+                end: end,
+            }) {
+                warn!("Could not store usable region {:#?}: {:?}", region, e);
+            }
+        }
     }
 
     loop {}
