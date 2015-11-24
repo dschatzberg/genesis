@@ -12,8 +12,8 @@
 
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
-#![feature(asm, const_fn, core_slice_ext, core_str_ext, lang_items, plugin,
-           no_std)]
+#![feature(asm, const_fn, core, core_slice_ext, core_str_ext, lang_items,
+           plugin, no_std)]
 #![plugin(clippy)]
 #![no_std]
 
@@ -24,9 +24,13 @@
         unused_import_braces, unused_qualifications)]
 //! The Genesis Microkernel.
 
+extern crate core as std;
 extern crate fixedvec;
+#[macro_use]
+extern crate lazy_static;
 extern crate multiboot;
 extern crate rlibc;
+extern crate spin;
 
 pub use self::arch::init as arch_init;
 

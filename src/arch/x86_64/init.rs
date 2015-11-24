@@ -15,9 +15,10 @@
 use super::serial;
 use core::mem::{size_of, transmute};
 use core::slice;
+use fixedvec::FixedVec;
 use mem::PAddr;
 use multiboot::{self, MemoryType, Multiboot};
-use fixedvec::FixedVec;
+use spin;
 
 unsafe fn early_paddr_to_slice<'a>(p: multiboot::PAddr,
                                    sz: usize)
@@ -36,9 +37,19 @@ struct MemoryRegion {
     end: PAddr,
 }
 
-const REGIONS_SIZE: usize = 4096;
+lazy_static! {
+    static ref REGIONS: spin::RwLock<FixedVec<'static, MemoryRegion>> = {
+        const REGIONS_SIZE: usize = 4096;
+        static mut REGIONS_MEM: [u8; REGIONS_SIZE] = [0; REGIONS_SIZE];
+        let region_slice = unsafe {
+            let ptr = transmute(REGIONS_MEM.as_mut_ptr());
+            let sz = REGIONS_SIZE / size_of::<MemoryRegion>();
+            slice::from_raw_parts_mut(ptr, sz)
+        };
 
-static mut regions: [u8; REGIONS_SIZE] = [0; REGIONS_SIZE];
+        spin::RwLock::new(FixedVec::new(region_slice))
+    };
+}
 
 /// Initial Rust entry point.
 #[no_mangle]
@@ -55,13 +66,7 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
     let mem_regions = mb.memory_regions()
                         .expect("Could not find Multiboot memory map");
 
-    let region_slice = unsafe {
-        let ptr = transmute(regions.as_mut_ptr());
-        let sz = REGIONS_SIZE / size_of::<MemoryRegion>();
-        slice::from_raw_parts_mut(ptr, sz)
-    };
-    // FIXME(dschatz): this cannot be stored on the stack
-    let mut vec = FixedVec::new(region_slice);
+    let mut vec = REGIONS.write();
 
     for region in mem_regions {
         let start = PAddr::from_u64(region.base_address());
@@ -79,6 +84,10 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
                 warn!("Could not store usable region {:#?}: {:?}", region, e);
             }
         }
+    }
+
+    for region in vec.iter() {
+        debug!("{:?}", region);
     }
 
     loop {}

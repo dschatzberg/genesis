@@ -49,7 +49,7 @@ rparen := )
 ASFLAGS ?=
 CARGOFLAGS ?=
 LDFLAGS ?= -z max-page-size=0x1000 --gc-sections
-RUSTCFLAGS ?=
+RUSTCFLAGS ?= -Z no-landing-pads
 ifeq ($(DEBUG),1)
 ASFLAGS += -g
 else

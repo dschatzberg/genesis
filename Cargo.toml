@@ -19,3 +19,10 @@ clippy = "0.0.24"
 fixedvec = "0.1"
 multiboot = "0.2"
 rlibc = "0.1"
+spin = "0.3"
+
+[dependencies.lazy_static]
+version = "0.1"
+features = ["nostd"]
+git = "https://github.com/dschatzberg/lazy-static.rs"
+branch = "spin"
