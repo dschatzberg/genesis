@@ -1,4 +1,5 @@
 build
 Cargo.lock
 config.mk
+Makefile.in
 target
