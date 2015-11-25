@@ -12,6 +12,7 @@
 
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
+use core::cmp::Ordering;
 use core::fmt;
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -59,6 +60,25 @@ impl fmt::UpperHex for PAddr {
     }
 }
 
+impl Eq for PAddr {}
+impl PartialEq for PAddr {
+    fn eq(&self, other: &PAddr) -> bool {
+        self.0.eq(&other.0)
+    }
+}
+
+impl PartialOrd for PAddr {
+    fn partial_cmp(&self, other: &PAddr) -> Option<Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
+
+impl Ord for PAddr {
+    fn cmp(&self, other: &PAddr) -> Ordering {
+        self.0.cmp(&other.0)
+    }
+}
+
 impl fmt::Binary for VAddr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.0.fmt(f)
@@ -86,5 +106,24 @@ impl fmt::Octal for VAddr {
 impl fmt::UpperHex for VAddr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl Eq for VAddr {}
+impl PartialEq for VAddr {
+    fn eq(&self, other: &VAddr) -> bool {
+        self.0.eq(&other.0)
+    }
+}
+
+impl PartialOrd for VAddr {
+    fn partial_cmp(&self, other: &VAddr) -> Option<Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
+
+impl Ord for VAddr {
+    fn cmp(&self, other: &VAddr) -> Ordering {
+        self.0.cmp(&other.0)
     }
 }

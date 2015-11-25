@@ -37,6 +37,27 @@ struct MemoryRegion {
     end: PAddr,
 }
 
+impl MemoryRegion {
+    fn new(start: PAddr, end: PAddr) -> MemoryRegion {
+        MemoryRegion {
+            start: start,
+            end: end,
+        }
+    }
+
+    fn trim_below(&mut self, addr: PAddr) -> () {
+        if self.start < addr && self.end > addr {
+            self.start = addr;
+        }
+    }
+
+    fn trim_above(&mut self, addr: PAddr) -> () {
+        if self.start < addr && self.end > addr {
+            self.end = addr;
+        }
+    }
+}
+
 lazy_static! {
     static ref REGIONS: spin::RwLock<FixedVec<'static, MemoryRegion>> = {
         const REGIONS_SIZE: usize = 4096;
@@ -69,6 +90,25 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
     loop {}
 }
 
+/// Report kernel physical memory range (not including boot code/data)
+fn kernel_memory_range() -> (PAddr, PAddr) {
+    extern {
+        static kbegin: u8;
+        static kend: u8;
+    }
+
+    let mask = (1 << 12) - 1;
+    let kbegin_addr = {
+        let ptr: *const _ = &kbegin;
+        ptr as u64 & !mask
+    };
+    let kend_addr = {
+        let ptr: *const _ = &kend;
+        (ptr as u64 + mask) & !mask
+    };
+    (PAddr::from_u64(kbegin_addr), PAddr::from_u64(kend_addr))
+}
+
 /// Discover available memory from the Multiboot structure
 fn discover_memory(mb: &Multiboot) -> () {
     let mem_regions = mb.memory_regions()
@@ -76,6 +116,8 @@ fn discover_memory(mb: &Multiboot) -> () {
 
     let mut vec = REGIONS.write();
 
+    let (kbegin, kend) = kernel_memory_range();
+    debug!("kbegin = {:#X}, kend = {:#X}", kbegin, kend);
     info!("Memory Map:");
     for region in mem_regions {
         let start = PAddr::from_u64(region.base_address());
@@ -86,15 +128,16 @@ fn discover_memory(mb: &Multiboot) -> () {
         };
         info!("{:#17X} - {:#17X}: {}", start, end, mem_type);
         if region.memory_type() == MemoryType::RAM {
-            if let Err(e) = vec.push(MemoryRegion {
-                start: start,
-                end: end,
-            }) {
+            let mut region = MemoryRegion::new(start, end);
+            region.trim_below(kend);
+            region.trim_above(kbegin);
+            if let Err(e) = vec.push(region) {
                 warn!("Could not store usable region {:#?}: {:?}", region, e);
             }
         }
     }
 
+    debug!("Available Memory:");
     for region in vec.iter() {
         debug!("{:?}", region);
     }
