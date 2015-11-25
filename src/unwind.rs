@@ -14,16 +14,16 @@
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 
 #[lang = "panic_fmt"]
-extern fn panic_fmt() -> ! {
+extern "C" fn panic_fmt() -> ! {
     loop {}
 }
 
 #[lang = "stack_exhausted"]
-extern fn stack_exhausted() -> ! {
+extern "C" fn stack_exhausted() -> ! {
     loop {}
 }
 
 #[lang = "eh_personality"]
-extern fn eh_personality() -> ! {
+extern "C" fn eh_personality() -> ! {
     loop {}
 }
