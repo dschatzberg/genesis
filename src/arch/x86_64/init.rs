@@ -58,16 +58,25 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
         serial::init();
     }
     debug!("Serial Initialized");
-    info!("Multiboot Structure loaded at {:#X}", multiboot_addr);
+    debug!("Multiboot Structure loaded at {:#X}", multiboot_addr);
     let mb = unsafe {
                  Multiboot::new(multiboot_addr.as_u64(), early_paddr_to_slice)
              }
              .expect("Could not access a Multiboot structure");
+
+    discover_memory(&mb);
+
+    loop {}
+}
+
+/// Discover available memory from the Multiboot structure
+fn discover_memory(mb: &Multiboot) -> () {
     let mem_regions = mb.memory_regions()
                         .expect("Could not find Multiboot memory map");
 
     let mut vec = REGIONS.write();
 
+    info!("Memory Map:");
     for region in mem_regions {
         let start = PAddr::from_u64(region.base_address());
         let end = PAddr::from_u64(region.base_address() + region.length());
@@ -89,6 +98,4 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
     for region in vec.iter() {
         debug!("{:?}", region);
     }
-
-    loop {}
 }
