@@ -16,7 +16,7 @@ use super::serial;
 use core::mem::{size_of, transmute};
 use core::slice;
 use fixedvec::FixedVec;
-use mem::PAddr;
+use memory::PAddr;
 use multiboot::{self, MemoryType, Multiboot};
 use spin;
 
@@ -31,7 +31,7 @@ unsafe fn early_paddr_to_slice<'a>(p: multiboot::PAddr,
     }
 }
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug)]
 struct MemoryRegion {
     start: PAddr,
     end: PAddr,

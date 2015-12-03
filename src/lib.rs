@@ -24,7 +24,11 @@
         unused_import_braces, unused_qualifications)]
 //! The Genesis Microkernel.
 
+#[cfg(not(test))]
 extern crate core as std;
+#[cfg(test)]
+#[macro_use]
+extern crate std;
 extern crate fixedvec;
 #[macro_use]
 extern crate lazy_static;
@@ -41,5 +45,5 @@ mod arch;
 mod console {
     pub use arch::serial::*;
 }
-mod mem;
+mod memory;
 mod unwind;

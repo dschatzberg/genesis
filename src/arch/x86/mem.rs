@@ -14,17 +14,20 @@
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 use core::fmt;
 
-#[derive(Copy, Clone, Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
+pub const PAGE_SHIFT: u8 = 12;
+pub const PAGE_SIZE: u64 = 1 << PAGE_SHIFT;
+
+#[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct PAddr(u64);
 
-#[derive(Copy, Clone, Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct VAddr(usize);
 
 impl PAddr {
-    pub fn as_u64(&self) -> u64 {
+    pub const fn as_u64(&self) -> u64 {
         self.0
     }
-    pub fn from_u64(v: u64) -> Self {
+    pub const fn from_u64(v: u64) -> Self {
         PAddr(v)
     }
 }

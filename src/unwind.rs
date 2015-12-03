@@ -13,16 +13,19 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 
+#[cfg(not(test))]
 #[lang = "panic_fmt"]
 extern "C" fn panic_fmt() -> ! {
     loop {}
 }
 
+#[cfg(not(test))]
 #[lang = "stack_exhausted"]
 extern "C" fn stack_exhausted() -> ! {
     loop {}
 }
 
+#[cfg(not(test))]
 #[lang = "eh_personality"]
 extern "C" fn eh_personality() -> ! {
     loop {}
