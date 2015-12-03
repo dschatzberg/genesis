@@ -118,7 +118,7 @@ impl<'a> FrameAllocator for FirstFitAllocator<'a> {
 mod test {
     use super::FirstFitAllocator;
     use fixedvec::FixedVec;
-    use memory::{Frame, FrameAllocator, FrameRange, PAddr};
+    use memory::{Frame, FrameAllocator, FrameRange};
     use spin;
 
     #[test]
