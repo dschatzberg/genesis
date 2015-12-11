@@ -31,6 +31,10 @@ impl Frame {
     pub const fn down(addr: PAddr) -> Frame {
         Frame { num: addr.as_u64() >> PAGE_SHIFT }
     }
+
+    pub const fn to_paddr(&self) -> PAddr {
+        PAddr::from_u64(self.num << PAGE_SHIFT)
+    }
 }
 
 impl Add<u64> for Frame {
@@ -60,6 +64,13 @@ impl FrameRange {
         FrameRange {
             begin: begin,
             nframes: nframes,
+        }
+    }
+
+    pub const fn from_frames(begin: Frame, end: Frame) -> FrameRange {
+        FrameRange {
+            begin: begin,
+            nframes: end.num - begin.num,
         }
     }
 

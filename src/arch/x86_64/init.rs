@@ -16,7 +16,8 @@ use super::serial;
 use core::mem::{size_of, transmute};
 use core::slice;
 use fixedvec::FixedVec;
-use memory::PAddr;
+use memory::{Frame, FrameAllocator, FrameRange, PAddr};
+use memory::first_fit_allocator::FirstFitAllocator;
 use multiboot::{self, MemoryType, Multiboot};
 use spin;
 
@@ -38,7 +39,7 @@ struct MemoryRegion {
 }
 
 impl MemoryRegion {
-    fn new(start: PAddr, end: PAddr) -> MemoryRegion {
+    const fn new(start: PAddr, end: PAddr) -> MemoryRegion {
         MemoryRegion {
             start: start,
             end: end,
@@ -60,15 +61,15 @@ impl MemoryRegion {
 
 lazy_static! {
     static ref REGIONS: spin::RwLock<FixedVec<'static, MemoryRegion>> = {
-        const REGIONS_SIZE: usize = 4096;
-        static mut REGIONS_MEM: [u8; REGIONS_SIZE] = [0; REGIONS_SIZE];
-        let region_slice = unsafe {
-            let ptr = transmute(REGIONS_MEM.as_mut_ptr());
-            let sz = REGIONS_SIZE / size_of::<MemoryRegion>();
-            slice::from_raw_parts_mut(ptr, sz)
-        };
-
-        spin::RwLock::new(FixedVec::new(region_slice))
+        const REGIONS_SIZE: usize = 256;
+        static mut REGIONS_MEM: [MemoryRegion; REGIONS_SIZE] =
+            [MemoryRegion::new(PAddr::from_u64(0), PAddr::from_u64(0));
+             REGIONS_SIZE];
+        // Unsafe to take a mutable reference of a static.
+        // We instantly store it behind a Rwlock, so this is safe
+        unsafe {
+            spin::RwLock::new(FixedVec::new(&mut REGIONS_MEM))
+        }
     };
 }
 
@@ -85,38 +86,40 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
              }
              .expect("Could not access a Multiboot structure");
 
-    discover_memory(&mb);
+    let allocator = FirstFitAllocator::get();
+    discover_memory(&mb, allocator);
 
     loop {}
 }
 
 /// Report kernel physical memory range (not including boot code/data)
 fn kernel_memory_range() -> (PAddr, PAddr) {
-    extern {
+    // kbegin and kend are defined as symbols in the linker script
+    extern "C" {
         static kbegin: u8;
         static kend: u8;
     }
 
-    let mask = (1 << 12) - 1;
+    const MASK: u64 = (1 << 12) - 1;
     let kbegin_addr = {
         let ptr: *const _ = &kbegin;
-        ptr as u64 & !mask
+        ptr as u64 & !MASK
     };
     let kend_addr = {
         let ptr: *const _ = &kend;
-        (ptr as u64 + mask) & !mask
+        (ptr as u64 + MASK) & !MASK
     };
     (PAddr::from_u64(kbegin_addr), PAddr::from_u64(kend_addr))
 }
 
 /// Discover available memory from the Multiboot structure
-fn discover_memory(mb: &Multiboot) -> () {
+fn discover_memory<Allocator: FrameAllocator>(mb: &Multiboot,
+                                              allocator: &Allocator) {
     let mem_regions = mb.memory_regions()
                         .expect("Could not find Multiboot memory map");
-
     let mut vec = REGIONS.write();
-
     let (kbegin, kend) = kernel_memory_range();
+    const INITIAL_MAP: PAddr = PAddr::from_u64(1 << 30);
     debug!("kbegin = {:#X}, kend = {:#X}", kbegin, kend);
     info!("Memory Map:");
     for region in mem_regions {
@@ -128,11 +131,27 @@ fn discover_memory(mb: &Multiboot) -> () {
         };
         info!("{:#17X} - {:#17X}: {}", start, end, mem_type);
         if region.memory_type() == MemoryType::RAM {
-            let mut region = MemoryRegion::new(start, end);
-            region.trim_below(kend);
-            region.trim_above(kbegin);
-            if let Err(e) = vec.push(region) {
-                warn!("Could not store usable region {:#?}: {:?}", region, e);
+            let region = MemoryRegion::new(start, end);
+            let mut trimmed_region = region;
+            trimmed_region.trim_below(kend);
+            trimmed_region.trim_above(kbegin);
+            if trimmed_region.start < INITIAL_MAP {
+                let frame_range = {
+                    let start_frame = Frame::up(trimmed_region.start);
+                    let end_frame = Frame::down(if trimmed_region.end <
+                                                   INITIAL_MAP {
+                        trimmed_region.end
+                    } else {
+                        INITIAL_MAP
+                    });
+                    FrameRange::from_frames(start_frame, end_frame)
+                };
+                if frame_range.nframes() > 0 {
+                    unsafe { allocator.free_range_manual(frame_range) };
+                }
+            }
+            if let Err(e) = vec.push(trimmed_region) {
+                warn!("Could not store usable  region {:#?}: {:?}", region, e);
             }
         }
     }
