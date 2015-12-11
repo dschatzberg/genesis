@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 use super::serial;
-use core::mem::{size_of, transmute};
+use core::mem::transmute;
 use core::slice;
 use fixedvec::FixedVec;
 use memory::{Frame, FrameAllocator, FrameRange, PAddr};
