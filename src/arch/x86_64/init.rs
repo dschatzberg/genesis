@@ -46,21 +46,23 @@ impl MemoryRegion {
         }
     }
 
-    fn trim_below(&mut self, addr: PAddr) -> () {
+    fn trim_below(&mut self, addr: PAddr) {
         if self.start < addr && self.end > addr {
             self.start = addr;
         }
     }
 
-    fn trim_above(&mut self, addr: PAddr) -> () {
+    fn trim_above(&mut self, addr: PAddr) {
         if self.start < addr && self.end > addr {
             self.end = addr;
         }
     }
 }
 
+type RegionVec = FixedVec<'static, MemoryRegion>;
+
 lazy_static! {
-    static ref REGIONS: spin::RwLock<FixedVec<'static, MemoryRegion>> = {
+    static ref REGIONS: spin::RwLock<RegionVec> = {
         const REGIONS_SIZE: usize = 256;
         static mut REGIONS_MEM: [MemoryRegion; REGIONS_SIZE] =
             [MemoryRegion::new(PAddr::from_u64(0), PAddr::from_u64(0));
@@ -86,9 +88,19 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
              }
              .expect("Could not access a Multiboot structure");
 
-    let allocator = FirstFitAllocator::get();
-    discover_memory(&mb, allocator);
+    {
+        let mut regions = REGIONS.write();
+        discover_memory(&mb, &mut *regions);
+    }
+    let regions = REGIONS.read();
+    debug!("Available Memory:");
+    for region in regions.iter() {
+        debug!("{:?}", region);
+    }
 
+    let allocator = FirstFitAllocator::get();
+    populate_allocator(&*regions, allocator);
+    map_available_memory(&*regions, allocator);
     loop {}
 }
 
@@ -113,15 +125,11 @@ fn kernel_memory_range() -> (PAddr, PAddr) {
 }
 
 /// Discover available memory from the Multiboot structure
-fn discover_memory<Allocator: FrameAllocator>(mb: &Multiboot,
-                                              allocator: &Allocator) {
+fn discover_memory(mb: &Multiboot, regions: &mut RegionVec) {
+    let (kbegin, kend) = kernel_memory_range();
+    debug!("kbegin = {:#X}, kend = {:#X}", kbegin, kend);
     let mem_regions = mb.memory_regions()
                         .expect("Could not find Multiboot memory map");
-    let mut vec = REGIONS.write();
-    let (kbegin, kend) = kernel_memory_range();
-    const INITIAL_MAP: PAddr = PAddr::from_u64(1 << 30);
-    debug!("kbegin = {:#X}, kend = {:#X}", kbegin, kend);
-    info!("Memory Map:");
     for region in mem_regions {
         let start = PAddr::from_u64(region.base_address());
         let end = PAddr::from_u64(region.base_address() + region.length());
@@ -131,37 +139,45 @@ fn discover_memory<Allocator: FrameAllocator>(mb: &Multiboot,
         };
         info!("{:#17X} - {:#17X}: {}", start, end, mem_type);
         if region.memory_type() == MemoryType::RAM {
-            let mut region = MemoryRegion::new(start, end);
-            region.trim_below(kend);
-            region.trim_above(kbegin);
-            if region.start < INITIAL_MAP {
-                let frame_range = {
-                    let start_frame = Frame::up(region.start);
-                    let end_frame = Frame::down(if region.end < INITIAL_MAP {
-                        region.end
-                    } else {
-                        INITIAL_MAP
-                    });
-                    FrameRange::new(start_frame, end_frame)
-                };
-                if frame_range.nframes() > 0 {
-                    unsafe { allocator.free_range_manual(frame_range) };
+            let mut reg = MemoryRegion::new(start, end);
+            reg.trim_below(kend);
+            reg.trim_above(kbegin);
+            if reg.start != reg.end {
+                if let Err(e) = regions.push(reg) {
+                    warn!("Could not store usable region {:#?}: {:?}",
+                          region,
+                          e)
                 }
             }
-            if let Err(e) = vec.push(region) {
-                warn!("Could not store usable  region {:#?}: {:?}", region, e);
-            }
-            map_memory_region(allocator, region);
         }
-    }
-
-    debug!("Available Memory:");
-    for region in vec.iter() {
-        debug!("{:?}", region);
     }
 }
 
-fn map_memory_region<Allocator: FrameAllocator>(allocator: &Allocator,
-                                                region: MemoryRegion) {
+/// Populate the memory allocator with accessible frames
+fn populate_allocator<Allocator: FrameAllocator>(regions: &RegionVec,
+                                                 allocator: &Allocator) {
+    const INITIAL_MAP: PAddr = PAddr::from_u64(1 << 30);
+    let accessible_frames = regions.iter().filter_map(|reg| {
+        let start_frame = Frame::up(reg.start);
+        let end_frame = Frame::down(if reg.end < INITIAL_MAP {
+            reg.end
+        } else {
+            INITIAL_MAP
+        });
+        let range = FrameRange::new(start_frame, end_frame);
+        if start_frame.start_address() >= INITIAL_MAP || range.nframes() == 0 {
+            None
+        } else {
+            Some(range)
+        }
+    });
+    for range in accessible_frames {
+        unsafe { allocator.free_range_manual(range) };
+    }
+}
+
+fn map_available_memory<Allocator: FrameAllocator>(regions: &RegionVec,
+                                                   allocator: &Allocator) {
+
 
 }
