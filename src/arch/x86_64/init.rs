@@ -143,7 +143,7 @@ fn discover_memory(mb: &Multiboot, regions: &mut RegionVec) {
             let mut reg = MemoryRegion::new(start, end);
             reg.trim_below(kend);
             reg.trim_above(kbegin);
-            if reg.start != reg.end {
+            if reg.start < reg.end {
                 if let Err(e) = regions.push(reg) {
                     warn!("Could not store usable region {:#?}: {:?}",
                           region,
