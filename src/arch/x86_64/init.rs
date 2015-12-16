@@ -131,28 +131,27 @@ fn discover_memory<Allocator: FrameAllocator>(mb: &Multiboot,
         };
         info!("{:#17X} - {:#17X}: {}", start, end, mem_type);
         if region.memory_type() == MemoryType::RAM {
-            let region = MemoryRegion::new(start, end);
-            let mut trimmed_region = region;
-            trimmed_region.trim_below(kend);
-            trimmed_region.trim_above(kbegin);
-            if trimmed_region.start < INITIAL_MAP {
+            let mut region = MemoryRegion::new(start, end);
+            region.trim_below(kend);
+            region.trim_above(kbegin);
+            if region.start < INITIAL_MAP {
                 let frame_range = {
-                    let start_frame = Frame::up(trimmed_region.start);
-                    let end_frame = Frame::down(if trimmed_region.end <
-                                                   INITIAL_MAP {
-                        trimmed_region.end
+                    let start_frame = Frame::up(region.start);
+                    let end_frame = Frame::down(if region.end < INITIAL_MAP {
+                        region.end
                     } else {
                         INITIAL_MAP
                     });
-                    FrameRange::from_frames(start_frame, end_frame)
+                    FrameRange::new(start_frame, end_frame)
                 };
                 if frame_range.nframes() > 0 {
                     unsafe { allocator.free_range_manual(frame_range) };
                 }
             }
-            if let Err(e) = vec.push(trimmed_region) {
+            if let Err(e) = vec.push(region) {
                 warn!("Could not store usable  region {:#?}: {:?}", region, e);
             }
+            map_memory_region(allocator, region);
         }
     }
 
@@ -160,4 +159,9 @@ fn discover_memory<Allocator: FrameAllocator>(mb: &Multiboot,
     for region in vec.iter() {
         debug!("{:?}", region);
     }
+}
+
+fn map_memory_region<Allocator: FrameAllocator>(allocator: &Allocator,
+                                                region: MemoryRegion) {
+
 }

@@ -28,12 +28,15 @@ extern crate core as std;
 #[cfg(test)]
 #[macro_use]
 extern crate std;
+#[macro_use]
+extern crate bitflags;
 extern crate fixedvec;
 #[macro_use]
 extern crate lazy_static;
 extern crate multiboot;
 extern crate rlibc;
 extern crate spin;
+extern crate x86;
 
 pub use self::arch::init as arch_init;
 

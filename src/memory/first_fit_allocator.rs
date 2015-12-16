@@ -24,7 +24,8 @@ lazy_static! {
     static ref FRAMES: spin::Mutex<FixedVec<'static, FrameRange>> = {
         const FRAMES_SIZE: usize = 256;
         static mut FRAMES_MEM: [FrameRange; FRAMES_SIZE] = [FrameRange::new(
-            Frame::down(PAddr::from_u64(0)), 0); FRAMES_SIZE];
+            Frame::down(PAddr::from_u64(0)), Frame::down(PAddr::from_u64(0)));
+                                                            FRAMES_SIZE];
         // Unsafe to take a mutable reference of a static.
         // We instantly store it behind a Mutex, so this is safe
         unsafe {
@@ -44,11 +45,11 @@ impl FirstFitAllocator<'static> {
 
 impl<'a> FrameAllocator for FirstFitAllocator<'a> {
     fn allocate_manual(&self) -> Option<Frame> {
-        self.allocate_range_manual(1).map(|range| range.start())
+        self.allocate_range_manual(1).map(|range| range.lower())
     }
 
     unsafe fn free_manual(&self, frame: Frame) {
-        self.free_range_manual(FrameRange::new(frame, 1))
+        self.free_range_manual(FrameRange::new(frame, frame + 1))
     }
 
     fn allocate_range_manual(&self, nframes: u64) -> Option<FrameRange> {
@@ -56,7 +57,8 @@ impl<'a> FrameAllocator for FirstFitAllocator<'a> {
         frames.iter()
               .position(|range| range.nframes() >= nframes)
               .map(|index| {
-                  let ret = FrameRange::new(frames[index].start(), nframes);
+                  let ret = FrameRange::new(frames[index].lower(),
+                                            frames[index].lower() + nframes);
                   if frames[index].nframes() == nframes {
                       frames.remove(index);
                   } else {
@@ -75,7 +77,7 @@ impl<'a> FrameAllocator for FirstFitAllocator<'a> {
         };
         let prev_coalesce = if ind > 0 {
             if let Some(prev) = frames.get(ind - 1) {
-                prev.end() == range.start()
+                prev.upper() == range.lower()
             } else {
                 false
             }
@@ -84,7 +86,7 @@ impl<'a> FrameAllocator for FirstFitAllocator<'a> {
         };
         let next_coalesce = if ind < frames.len() {
             if let Some(next) = frames.get(ind) {
-                range.end() == next.start()
+                range.upper() == next.lower()
             } else {
                 false
             }
