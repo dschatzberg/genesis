@@ -95,7 +95,7 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
     let regions = REGIONS.read();
     debug!("Available Memory:");
     for region in regions.iter() {
-        debug!("{:?}", region);
+        debug!("{:#17X} - {:#17X}", region.start, region.end);
     }
 
     let allocator = FirstFitAllocator::get();
