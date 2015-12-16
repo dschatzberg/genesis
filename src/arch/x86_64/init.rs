@@ -124,7 +124,8 @@ fn kernel_memory_range() -> (PAddr, PAddr) {
     (PAddr::from_u64(kbegin_addr), PAddr::from_u64(kend_addr))
 }
 
-/// Discover available memory from the Multiboot structure
+/// Discover available memory from the Multiboot structure and populate
+/// `regions`
 fn discover_memory(mb: &Multiboot, regions: &mut RegionVec) {
     let (kbegin, kend) = kernel_memory_range();
     debug!("kbegin = {:#X}, kend = {:#X}", kbegin, kend);
