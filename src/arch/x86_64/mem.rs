@@ -13,24 +13,3 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 pub use x86::paging::*;
-use core::ptr::Unique;
-
-pub struct PageTable {
-    table: Unique<PML4>,
-}
-
-pub const BASE_PAGE_SHIFT: u8 = 12;
-
-impl PageTable {
-    pub unsafe fn new(table: *mut PML4) -> PageTable {
-        PageTable { table: Unique::new(table) }
-    }
-
-    pub fn get(&self) -> &PML4 {
-        unsafe { self.table.get() }
-    }
-
-    pub fn get_mut(&mut self) -> &mut PML4 {
-        unsafe { self.table.get_mut() }
-    }
-}

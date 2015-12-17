@@ -16,17 +16,19 @@ use super::serial;
 use core::mem::transmute;
 use core::slice;
 use fixedvec::FixedVec;
-use memory::{Frame, FrameAllocator, FrameRange, PAddr, PageTable, VAddr};
-use memory::{PML4, pml4_index};
+use memory::*;
 use memory::first_fit_allocator::FirstFitAllocator;
 use multiboot::{self, MemoryType, Multiboot};
 use spin;
+use x86::controlregs::cr3_write;
+
+const INITIAL_VIRTUAL_OFFSET: u64 = 0xFFFFFFFFC0000000;
 
 unsafe fn early_paddr_to_slice<'a>(p: multiboot::PAddr,
                                    sz: usize)
                                    -> Option<&'a [u8]> {
     if (sz < (1 << 30)) && ((p + sz as u64) < (1 << 30)) {
-        let ptr = transmute(p + 0xFFFFFFFFC0000000);
+        let ptr = transmute(p + INITIAL_VIRTUAL_OFFSET);
         Some(slice::from_raw_parts(ptr, sz))
     } else {
         None
@@ -106,6 +108,9 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
         let frame =
             allocator.allocate_manual()
                      .expect("Could not allocate frame for new PageTable");
+        for b in initial_frame_to_slice(frame).iter_mut() {
+            *b = 0;
+        }
         unsafe {
             let table =
                 (frame.start_address().as_u64() +
@@ -113,7 +118,18 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
             (frame, PageTable::new(table))
         }
     };
-    map_available_memory(&mut page_table, &*regions, allocator);
+    map_free_memory(&mut page_table, &*regions, allocator);
+    let (text_range, ro_range, data_range) = kernel_segments();
+    map_range(&mut page_table, text_range, PT_P | PT_G, allocator);
+    map_range(&mut page_table, ro_range, PT_P | PT_G | PT_XD, allocator);
+    map_range(&mut page_table,
+              data_range,
+              PT_P | PT_RW | PT_G | PT_XD,
+              allocator);
+    unsafe {
+        cr3_write(page_table_frame.start_address().as_u64());
+    }
+    debug!("Switched to runtime page table");
     loop {}
 }
 
@@ -135,6 +151,39 @@ fn kernel_memory_range() -> (PAddr, PAddr) {
         (ptr as u64 + MASK) & !MASK
     };
     (PAddr::from_u64(kbegin_addr), PAddr::from_u64(kend_addr))
+}
+
+/// Reports text segment, read only data, and writable data
+fn kernel_segments() -> (FrameRange, FrameRange, FrameRange) {
+    let convert = |sym: &'static u8| {
+        let addr: *const _ = sym;
+        PAddr::from_u64(addr as u64 - INITIAL_VIRTUAL_OFFSET)
+    };
+    let range = |sym1: &'static u8, sym2: &'static u8| {
+        FrameRange::new(Frame::down(convert(sym1)), Frame::up(convert(sym2)))
+    };
+    let text_range = {
+        extern "C" {
+            static btext: u8;
+            static etext: u8;
+        }
+        range(&btext, &etext)
+    };
+    let ro_range = {
+        extern "C" {
+            static bro: u8;
+            static ero: u8;
+        }
+        range(&bro, &ero)
+    };
+    let data_range = {
+        extern "C" {
+            static bdata: u8;
+            static edata: u8;
+        }
+        range(&bdata, &edata)
+    };
+    (text_range, ro_range, data_range)
 }
 
 /// Discover available memory from the Multiboot structure and populate
@@ -167,10 +216,11 @@ fn discover_memory(mb: &Multiboot, regions: &mut RegionVec) {
     }
 }
 
+const INITIAL_MAP: PAddr = PAddr::from_u64(1 << 30);
+
 /// Populate the memory allocator with accessible frames
 fn populate_allocator<Allocator: FrameAllocator>(regions: &RegionVec,
                                                  allocator: &Allocator) {
-    const INITIAL_MAP: PAddr = PAddr::from_u64(1 << 30);
     let accessible_frames = regions.iter().filter_map(|reg| {
         let start_frame = Frame::up(reg.start);
         let end_frame = Frame::down(if reg.end < INITIAL_MAP {
@@ -190,9 +240,15 @@ fn populate_allocator<Allocator: FrameAllocator>(regions: &RegionVec,
     }
 }
 
-fn map_available_memory<Allocator: FrameAllocator>(page_table: &mut PageTable,
-                                                   regions: &RegionVec,
-                                                   allocator: &Allocator) {
+fn initial_frame_to_slice<'a>(frame: Frame) -> &'a mut [u8; PAGE_SIZE as usize] {
+    unsafe {
+        transmute(frame.start_address().as_u64() + INITIAL_VIRTUAL_OFFSET)
+    }
+}
+
+fn map_free_memory<Allocator: FrameAllocator>(page_table: &mut PageTable,
+                                              regions: &RegionVec,
+                                              allocator: &Allocator) {
     let frames = regions.iter().filter_map(|reg| {
         let start_frame = Frame::up(reg.start);
         let end_frame = Frame::down(reg.end);
@@ -207,16 +263,95 @@ fn map_available_memory<Allocator: FrameAllocator>(page_table: &mut PageTable,
     for range in frames {
         for offset in 0..range.nframes() {
             let frame = range.lower() + offset;
-            let vaddr =
-                VAddr::from_usize((frame.start_address().as_u64() +
-                                  0xFFFF_FF80_0000_0000) as usize);
-
-            let pml4 = page_table.get_mut();
-            let pml4_idx = pml4_index(vaddr);
-
-            if pml4[pml4_idx].is_empty() {
-
-            }
+            let page = {
+                assert!(frame.start_address() < INITIAL_MAP);
+                let addr = frame.start_address().as_u64() +
+                           0xFFFF_FF80_0000_0000;
+                Page::down(VAddr::from_usize(addr as usize))
+            };
+            map(page_table,
+                page,
+                frame,
+                PT_P | PT_RW | PT_G | PT_XD,
+                allocator,
+                initial_frame_to_slice);
         }
     }
+}
+
+fn map_range<Allocator>(page_table: &mut PageTable,
+                        range: FrameRange,
+                        flags: PTEntry,
+                        allocator: &Allocator)
+    where Allocator: FrameAllocator
+{
+    for offset in 0..range.nframes() {
+        let frame = range.lower() + offset;
+        let page = {
+            assert!(frame.start_address() < INITIAL_MAP);
+            let addr = frame.start_address().as_u64() + INITIAL_VIRTUAL_OFFSET;
+            Page::down(VAddr::from_usize(addr as usize))
+        };
+        map(page_table,
+            page,
+            frame,
+            flags,
+            allocator,
+            initial_frame_to_slice);
+    }
+}
+
+fn map<'a, Allocator, F>(page_table: &'a mut PageTable,
+                         page: Page,
+                         frame: Frame,
+                         flags: PTEntry,
+                         allocator: &Allocator,
+                         f: F)
+    where Allocator: FrameAllocator,
+          F: Fn(Frame) -> &'a mut [u8; PAGE_SIZE as usize]
+{
+    let pml4 = page_table.get_mut();
+    let pml4_idx = pml4_index(page.start_address());
+    if pml4[pml4_idx].is_empty() {
+        let frame = allocator.allocate_manual()
+                             .expect("Could not allocate frame for PDPT");
+        for b in f(frame).iter_mut() {
+            *b = 0;
+        }
+        pml4[pml4_idx] = PML4Entry::new(frame.start_address(),
+                                        PML4_P | PML4_RW);
+    }
+    let pdpt: &mut PDPT = unsafe {
+        transmute(f(Frame::down(pml4[pml4_idx].get_address())))
+    };
+    let pdpt_idx = pdpt_index(page.start_address());
+    if pdpt[pdpt_idx].is_empty() {
+        let frame = allocator.allocate_manual()
+                             .expect("Could not allocate frame for PD");
+        for b in f(frame).iter_mut() {
+            *b = 0;
+        }
+        pdpt[pdpt_idx] = PDPTEntry::new(frame.start_address(),
+                                        PDPT_P | PDPT_RW);
+    }
+
+    let pd: &mut PD = unsafe {
+        transmute(f(Frame::down(pdpt[pdpt_idx].get_address())))
+    };
+    let pd_idx = pd_index(page.start_address());
+    if pd[pd_idx].is_empty() {
+        let frame = allocator.allocate_manual()
+                             .expect("Could not allocate frame for PT");
+        for b in f(frame).iter_mut() {
+            *b = 0;
+        }
+        pd[pd_idx] = PDEntry::new(frame.start_address(), PD_P | PD_RW);
+    }
+
+    let pt: &mut PT = unsafe {
+        transmute(f(Frame::down(pd[pd_idx].get_address())))
+    };
+    let pt_idx = pt_index(page.start_address());
+    assert!(pt[pt_idx].is_empty());
+    pt[pt_idx] = PTEntry::new(frame.start_address(), flags);
 }

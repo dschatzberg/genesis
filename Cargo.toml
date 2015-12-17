@@ -32,4 +32,4 @@ git = "https://github.com/dschatzberg/lazy-static.rs"
 branch = "spin"
 
 [dependencies.x86]
-git = "https://github.com/gz/rust-x86.git"
+git = "https://github.com/dschatzberg/rust-x86.git"
