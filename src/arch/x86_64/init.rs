@@ -16,7 +16,8 @@ use super::serial;
 use core::mem::transmute;
 use core::slice;
 use fixedvec::FixedVec;
-use memory::{Frame, FrameAllocator, FrameRange, PAddr};
+use memory::{Frame, FrameAllocator, FrameRange, PAddr, PageTable, VAddr};
+use memory::{PML4, pml4_index};
 use memory::first_fit_allocator::FirstFitAllocator;
 use multiboot::{self, MemoryType, Multiboot};
 use spin;
@@ -100,7 +101,19 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
 
     let allocator = FirstFitAllocator::get();
     populate_allocator(&*regions, allocator);
-    map_available_memory(&*regions, allocator);
+
+    let (page_table_frame, mut page_table) = {
+        let frame =
+            allocator.allocate_manual()
+                     .expect("Could not allocate frame for new PageTable");
+        unsafe {
+            let table =
+                (frame.start_address().as_u64() +
+                 0xFFFFFFFFC0000000) as *mut PML4;
+            (frame, PageTable::new(table))
+        }
+    };
+    map_available_memory(&mut page_table, &*regions, allocator);
     loop {}
 }
 
@@ -177,8 +190,33 @@ fn populate_allocator<Allocator: FrameAllocator>(regions: &RegionVec,
     }
 }
 
-fn map_available_memory<Allocator: FrameAllocator>(regions: &RegionVec,
+fn map_available_memory<Allocator: FrameAllocator>(page_table: &mut PageTable,
+                                                   regions: &RegionVec,
                                                    allocator: &Allocator) {
+    let frames = regions.iter().filter_map(|reg| {
+        let start_frame = Frame::up(reg.start);
+        let end_frame = Frame::down(reg.end);
+        let range = FrameRange::new(start_frame, end_frame);
+        if range.nframes() == 0 {
+            None
+        } else {
+            Some(range)
+        }
+    });
 
+    for range in frames {
+        for offset in 0..range.nframes() {
+            let frame = range.lower() + offset;
+            let vaddr =
+                VAddr::from_usize((frame.start_address().as_u64() +
+                                  0xFFFF_FF80_0000_0000) as usize);
 
+            let pml4 = page_table.get_mut();
+            let pml4_idx = pml4_index(vaddr);
+
+            if pml4[pml4_idx].is_empty() {
+
+            }
+        }
+    }
 }

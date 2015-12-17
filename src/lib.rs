@@ -12,7 +12,7 @@
 
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
-#![feature(asm, const_fn, lang_items, plugin)]
+#![feature(asm, const_fn, lang_items, plugin, unique)]
 #![plugin(clippy)]
 #![no_std]
 

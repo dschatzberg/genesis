@@ -16,3 +16,5 @@ pub use super::x86::serial;
 
 /// Architecture specific boot code.
 pub mod init;
+
+pub mod mem;
