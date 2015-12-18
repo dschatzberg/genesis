@@ -35,12 +35,16 @@ SECTIONS {
            LONG(mb_checksum)
          }
 
+         .boot_text : {
+           *(.boot_text*)
+         }
+
          .boot_data : {
            *(.boot_data*)
          }
 
-         .boot_text : {
-           *(.boot_text*)
+         .boot_bss : {
+           *(.boot_bss*)
          }
 
          /* Higher half */

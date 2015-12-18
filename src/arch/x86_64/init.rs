@@ -126,31 +126,26 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
               data_range,
               PT_P | PT_RW | PT_G | PT_XD,
               allocator);
-    unsafe {
-        cr3_write(page_table_frame.start_address().as_u64());
-    }
-    debug!("Switched to runtime page table");
+    // unsafe {
+    //     cr3_write(page_table_frame.start_address().as_u64());
+    // }
+    // debug!("Switched to runtime page table");
     loop {}
 }
 
-/// Report kernel physical memory range (not including boot code/data)
+/// Report kernel physical memory range (including boot code/data)
 fn kernel_memory_range() -> (PAddr, PAddr) {
     // kbegin and kend are defined as symbols in the linker script
     extern "C" {
-        static kbegin: u8;
         static kend: u8;
     }
 
     const MASK: u64 = (1 << 12) - 1;
-    let kbegin_addr = {
-        let ptr: *const _ = &kbegin;
-        ptr as u64 & !MASK
-    };
     let kend_addr = {
         let ptr: *const _ = &kend;
         (ptr as u64 + MASK) & !MASK
     };
-    (PAddr::from_u64(kbegin_addr), PAddr::from_u64(kend_addr))
+    (PAddr::from_u64(1 << 20), PAddr::from_u64(kend_addr))
 }
 
 /// Reports text segment, read only data, and writable data

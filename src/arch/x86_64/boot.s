@@ -17,7 +17,7 @@
 .set PHYS_VIRT_OFFSET, 0xffffffffC0000000
 
 // Initial Stack
-.bss
+.section .boot_bss, "aw", @nobits
 .align 16
 boot_stack_bottom = .
 .space 16 * 1024
@@ -26,25 +26,25 @@ boot_stack_top = .
 // Initial Page Tables
 // The first and last GB of virtual memory are mapped to the first
 // GB of physical memory
-.data
+.section .boot_data, "a", @progbits
 .align 4096
 boot_pml4:
-        .quad boot_pdpt_low - PHYS_VIRT_OFFSET + 0x3
+        .quad boot_pdpt_low + 0x3
         .rept 510
         .quad 0
         .endr
-        .quad boot_pdpt_high - PHYS_VIRT_OFFSET + 0x3
+        .quad boot_pdpt_high + 0x3
 boot_pdpt_low:
-        .quad boot_pd - PHYS_VIRT_OFFSET + 0x3
+        .quad boot_pd + 0x3
         .rept 511
         .quad 0
         .endr
 boot_pdpt_high:
-        .quad boot_pd - PHYS_VIRT_OFFSET + 0x3
+        .quad boot_pd + 0x3
         .rept 510
         .quad 0
         .endr
-        .quad boot_pd - PHYS_VIRT_OFFSET + 0x3
+        .quad boot_pd + 0x3
 boot_pd:
         index = 0
         .rept 512
@@ -81,17 +81,15 @@ boot_gdt_desc:
         .short boot_gdt_end - boot_gdt - 1
         .quad boot_gdt
 
-.section .boot_data, "a", @progbits
-
-.align 16
-boot_start:
-boot_stack_top_indirect:
-        .quad boot_stack_top - PHYS_VIRT_OFFSET
-boot_pml4_indirect:
-        .quad boot_pml4 - PHYS_VIRT_OFFSET
-boot_gdt_desc32:
-        .short boot_gdt_end - boot_gdt - 1
-        .quad boot_gdt - PHYS_VIRT_OFFSET
+;; .align 16
+;; boot_start:
+;; boot_stack_top_indirect:
+;;         .quad boot_stack_top - PHYS_VIRT_OFFSET
+;; boot_pml4_indirect:
+;;         .quad boot_pml4 - PHYS_VIRT_OFFSET
+;; boot_gdt_desc32:
+;;         .short boot_gdt_end - boot_gdt - 1
+;;         .quad boot_gdt - PHYS_VIRT_OFFSET
 
 .section .boot_text, "ax", @progbits
         .code32
@@ -109,8 +107,7 @@ boot32:
         mov %ebx, %edi
 
         // setup stack
-        mov boot_stack_top_indirect, %eax
-        mov %eax, %esp
+        mov $boot_stack_top, %esp
         mov $0, %ebp
 
         // detect if we can cpuid
@@ -146,7 +143,7 @@ boot32:
         mov $0x628, %eax
         mov %eax, %cr4
         // point to the pml4
-        mov boot_pml4_indirect, %eax
+        mov $boot_pml4, %eax
         mov %eax, %cr3
         // paging is setup, but not enabled
         // set long mode
@@ -158,7 +155,7 @@ boot32:
         mov $0x80010023, %eax // set page bit and FPU
         mov %eax, %cr0
 
-        lgdt boot_gdt_desc32
+        lgdt boot_gdt_desc
 
         ljmp $8, $boot64_trampoline
 
@@ -205,17 +202,6 @@ boot64:
         mov %ax, %ds
         mov %ax, %fs
         mov %ax, %gs
-
-        // set stack to higher half address
-        lea boot_stack_top, %rsp
-        // lgdt takes a linear address (pre-page translation), so lets do it
-        // again with the higher half address so that we can unmap the lower
-        // half
-        lgdt boot_gdt_desc
-
-        // unmap lower memory and invlpg
-        movq $0, boot_pml4
-        invlpg 0
 
         // Call into rust
         call arch_init
