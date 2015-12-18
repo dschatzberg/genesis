@@ -44,7 +44,7 @@ SECTIONS {
          }
 
          /* Higher half */
-         . = . + KERNEL_PHYS_MAP;
+         . = ALIGN(4K) + KERNEL_PHYS_MAP;
          kbegin = . - KERNEL_PHYS_MAP;
 
          .text ALIGN(4K) : AT(ADDR(.text) - KERNEL_PHYS_MAP) {
