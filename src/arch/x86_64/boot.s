@@ -206,9 +206,27 @@ boot64:
         // Call into rust
         call arch_init
 
-.Lhang:
+1:
         cli
         hlt
-        jmp .Lhang
+        jmp 1b
         .cfi_endproc
 .size boot64, . - boot64
+
+.global switch_to_runtime_pagetable
+.type switch_to_runtime_pagetable, @function
+switch_to_runtime_pagetable:
+        .cfi_startproc simple
+        .cfi_def_cfa %rsp, 0
+        .cfi_undefined %rip
+
+        mov %rdi, %rsp
+        mov %rsi, %cr3
+        call *%rdx
+
+1:
+        cli
+        hlt
+        jmp 1b
+        .cfi_endproc
+.size switch_to_runtime_pagetable, . - switch_to_runtime_pagetable

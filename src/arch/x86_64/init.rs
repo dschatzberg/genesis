@@ -78,6 +78,13 @@ lazy_static! {
     };
 }
 
+extern "C" {
+    fn switch_to_runtime_pagetable(stack: u64,
+                                   pml4: u64,
+                                   cb: extern "C" fn() -> !)
+                                   -> !;
+}
+
 /// Initial Rust entry point.
 #[no_mangle]
 pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
@@ -126,10 +133,16 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
               data_range,
               PT_P | PT_RW | PT_G | PT_XD,
               allocator);
-    // unsafe {
-    //     cr3_write(page_table_frame.start_address().as_u64());
-    // }
-    // debug!("Switched to runtime page table");
+    let new_stack = map_stack(&mut page_table, allocator).as_usize();
+    unsafe {
+        switch_to_runtime_pagetable(new_stack as u64,
+                                    page_table_frame.start_address().as_u64(),
+                                    arch_continue_init);
+    }
+}
+
+extern "C" fn arch_continue_init() -> ! {
+    debug!("Switched to runtime page table");
     loop {}
 }
 
@@ -296,6 +309,33 @@ fn map_range<Allocator>(page_table: &mut PageTable,
             allocator,
             initial_frame_to_slice);
     }
+}
+
+// map a 12K stack with a guard page below the kernel start
+fn map_stack<Allocator>(page_table: &mut PageTable,
+                        allocator: &Allocator)
+                        -> VAddr
+    where Allocator: FrameAllocator
+{
+    let kbegin_page = {
+        extern "C" {
+            static kbegin: u8;
+        }
+        let ptr: *const _ = &kbegin;
+        Page::down(VAddr::from_usize(ptr as usize))
+    };
+    for i in 1..3 {
+        let frame = allocator.allocate_manual()
+                             .expect("Could not allocate frame for stack");
+        let page = kbegin_page - i;
+        map(page_table,
+            page,
+            frame,
+            PT_P | PT_RW | PT_G | PT_XD,
+            allocator,
+            initial_frame_to_slice);
+    }
+    kbegin_page.start_address()
 }
 
 fn map<'a, Allocator, F>(page_table: &'a mut PageTable,
