@@ -235,7 +235,9 @@ fn populate_allocator<Allocator: FrameAllocator>(regions: &RegionVec,
     }
 }
 
-fn initial_frame_to_slice<'a>(frame: Frame) -> &'a mut [u8; PAGE_SIZE as usize] {
+type PageSlice = [u8; PAGE_SIZE as usize];
+
+fn initial_frame_to_slice<'a>(frame: Frame) -> &'a mut PageSlice {
     unsafe {
         transmute(frame.start_address().as_u64() + INITIAL_VIRTUAL_OFFSET)
     }
