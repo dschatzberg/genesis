@@ -16,11 +16,15 @@ use super::serial;
 use core::mem::transmute;
 use core::slice;
 use fixedvec::FixedVec;
+use std::mem;
 use memory::*;
 use memory::first_fit_allocator::FirstFitAllocator;
 use multiboot::{self, MemoryType, Multiboot};
 use spin;
+use std::u32;
 use x86::controlregs::cr3_write;
+use x86::segmentation::*;
+use x86::dtables::*;
 
 const INITIAL_VIRTUAL_OFFSET: u64 = 0xFFFFFFFFC0000000;
 
@@ -76,6 +80,17 @@ lazy_static! {
             spin::RwLock::new(FixedVec::new(&mut REGIONS_MEM))
         }
     };
+
+    static ref GDT: [SegmentDescriptor; 5] =
+        [SegmentDescriptor::empty(), // NULL Descriptor
+         SegmentDescriptor::new(0, u32::MAX) |
+         TYPE_C_ER | DESC_S | DESC_DPL0 | DESC_P | DESC_L | DESC_G,
+         SegmentDescriptor::new(0, u32::MAX) |
+         TYPE_D_RW | DESC_S | DESC_DPL0 | DESC_P,
+         SegmentDescriptor::new(0, u32::MAX) |
+         TYPE_D_RW | DESC_S | DESC_DPL3 | DESC_P,
+         SegmentDescriptor::new(0, u32::MAX) |
+         TYPE_C_ER | DESC_S | DESC_DPL3 | DESC_P | DESC_L | DESC_G];
 }
 
 extern "C" {
@@ -143,6 +158,20 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
 
 extern "C" fn arch_continue_init() -> ! {
     debug!("Switched to runtime page table");
+    let gdt_ptr = {
+        let gdtp: *const _ = &*GDT;
+        let gdt_size = (mem::size_of::<SegmentDescriptor>() * GDT.len() -
+                        1) as u16;
+        DescriptorTablePointer {
+            limit: gdt_size,
+            base: gdtp as u64,
+        }
+    };
+    unsafe {
+        lgdt(&gdt_ptr);
+        load_cs(SegmentSelector::new(1));
+        load_ss(SegmentSelector::new(2));
+    }
     loop {}
 }
 
