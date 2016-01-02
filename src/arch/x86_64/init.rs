@@ -22,9 +22,113 @@ use memory::first_fit_allocator::FirstFitAllocator;
 use multiboot::{self, MemoryType, Multiboot};
 use spin;
 use std::u32;
-use x86::controlregs::cr3_write;
 use x86::segmentation::*;
 use x86::dtables::*;
+
+/// Initial Rust entry point.
+#[no_mangle]
+pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
+    initialize_console();
+
+    process_multiboot(multiboot_addr);
+
+    let regions = REGIONS.read();
+    let allocator = FirstFitAllocator::get();
+    populate_allocator(&*regions, allocator);
+
+    let (page_table_frame, mut page_table) =
+        create_runtime_pagetable(allocator);
+
+    map_free_memory(&mut page_table, &*regions, allocator);
+    map_kernel(&mut page_table, allocator);
+    let new_stack = map_stack(&mut page_table, allocator).as_usize();
+
+    // Drop the REGIONS read lock before switching the page table
+    drop(regions);
+
+    unsafe {
+        switch_to_runtime_pagetable(new_stack as u64,
+                                    page_table_frame.start_address().as_u64(),
+                                    arch_continue_init);
+    }
+}
+
+extern "C" fn arch_continue_init() -> ! {
+    let regions = REGIONS.read();
+    let allocator = FirstFitAllocator::get();
+    // Now that we are on the runtime page table, we can free boot and higher
+    // memory to the allocator
+    free_boot_memory(allocator);
+    free_upper_memory(&regions, allocator);
+
+    reset_gdt();
+    loop {}
+}
+
+fn initialize_console() {
+    unsafe {
+        serial::init();
+    }
+    debug!("Serial Initialized");
+}
+
+fn process_multiboot(multiboot_addr: PAddr) {
+    debug!("Multiboot Structure loaded at {:#X}", multiboot_addr);
+    let mb = unsafe {
+                 Multiboot::new(multiboot_addr.as_u64(), early_paddr_to_slice)
+             }
+             .expect("Could not access a Multiboot structure");
+
+    process_multiboot_memory(mb.memory_regions()
+                               .expect("Could not find Multiboot memory map"));
+
+    // TODO: process cmdline and modules
+}
+
+/// Discover available memory from the Multiboot structure and populate
+/// `REGIONS`
+fn process_multiboot_memory(mem_regions: multiboot::MemoryMapIter) {
+    let mut regions = REGIONS.write();
+    // kbegin and kend are defined as symbols in the linker script
+    let (kbegin, kend) = {
+        extern "C" {
+            static kend: u8;
+            static kbegin: u8;
+        }
+
+        const MASK: u64 = (1 << 12) - 1;
+        let kbegin_addr = {
+            let ptr: *const _ = &kbegin;
+            ptr as u64 & !MASK
+        };
+        let kend_addr = {
+            let ptr: *const _ = &kend;
+            (ptr as u64 + MASK) & !MASK
+        };
+        (PAddr::from_u64(kbegin_addr), PAddr::from_u64(kend_addr))
+    };
+    for region in mem_regions {
+        let start = PAddr::from_u64(region.base_address());
+        let end = PAddr::from_u64(region.base_address() + region.length());
+        let mem_type = match region.memory_type() {
+            MemoryType::RAM => "RAM",
+            MemoryType::Unusable => "Unusable",
+        };
+        info!("{:#17X} - {:#17X}: {}", start, end, mem_type);
+        if region.memory_type() == MemoryType::RAM {
+            let mut reg = MemoryRegion::new(start, end);
+            reg.trim_below(kend);
+            reg.trim_above(kbegin);
+            if reg.start < reg.end {
+                if let Err(e) = regions.push(reg) {
+                    warn!("Could not store usable region {:#?}: {:?}",
+                          region,
+                          e)
+                }
+            }
+        }
+    }
+}
 
 const INITIAL_VIRTUAL_OFFSET: u64 = 0xFFFFFFFFC0000000;
 
@@ -93,103 +197,6 @@ lazy_static! {
          TYPE_C_ER | DESC_S | DESC_DPL3 | DESC_P | DESC_L | DESC_G];
 }
 
-extern "C" {
-    fn switch_to_runtime_pagetable(stack: u64,
-                                   pml4: u64,
-                                   cb: extern "C" fn() -> !)
-                                   -> !;
-}
-
-/// Initial Rust entry point.
-#[no_mangle]
-pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
-    unsafe {
-        serial::init();
-    }
-    debug!("Serial Initialized");
-    debug!("Multiboot Structure loaded at {:#X}", multiboot_addr);
-    let mb = unsafe {
-                 Multiboot::new(multiboot_addr.as_u64(), early_paddr_to_slice)
-             }
-             .expect("Could not access a Multiboot structure");
-
-    {
-        let mut regions = REGIONS.write();
-        discover_memory(&mb, &mut *regions);
-    }
-    let regions = REGIONS.read();
-    debug!("Available Memory:");
-    for region in regions.iter() {
-        debug!("{:#17X} - {:#17X}", region.start, region.end);
-    }
-
-    let allocator = FirstFitAllocator::get();
-    populate_allocator(&*regions, allocator);
-
-    let (page_table_frame, mut page_table) = {
-        let frame =
-            allocator.allocate_manual()
-                     .expect("Could not allocate frame for new PageTable");
-        for b in initial_frame_to_slice(frame).iter_mut() {
-            *b = 0;
-        }
-        unsafe {
-            let table =
-                (frame.start_address().as_u64() +
-                 0xFFFFFFFFC0000000) as *mut PML4;
-            (frame, PageTable::new(table))
-        }
-    };
-    map_free_memory(&mut page_table, &*regions, allocator);
-    let (text_range, ro_range, data_range) = kernel_segments();
-    map_range(&mut page_table, text_range, PT_P | PT_G, allocator);
-    map_range(&mut page_table, ro_range, PT_P | PT_G | PT_XD, allocator);
-    map_range(&mut page_table,
-              data_range,
-              PT_P | PT_RW | PT_G | PT_XD,
-              allocator);
-    let new_stack = map_stack(&mut page_table, allocator).as_usize();
-    unsafe {
-        switch_to_runtime_pagetable(new_stack as u64,
-                                    page_table_frame.start_address().as_u64(),
-                                    arch_continue_init);
-    }
-}
-
-extern "C" fn arch_continue_init() -> ! {
-    debug!("Switched to runtime page table");
-    let gdt_ptr = {
-        let gdtp: *const _ = &*GDT;
-        let gdt_size = (mem::size_of::<SegmentDescriptor>() * GDT.len() -
-                        1) as u16;
-        DescriptorTablePointer {
-            limit: gdt_size,
-            base: gdtp as u64,
-        }
-    };
-    unsafe {
-        lgdt(&gdt_ptr);
-        load_cs(SegmentSelector::new(1));
-        load_ss(SegmentSelector::new(2));
-    }
-    loop {}
-}
-
-/// Report kernel physical memory range (including boot code/data)
-fn kernel_memory_range() -> (PAddr, PAddr) {
-    // kbegin and kend are defined as symbols in the linker script
-    extern "C" {
-        static kend: u8;
-    }
-
-    const MASK: u64 = (1 << 12) - 1;
-    let kend_addr = {
-        let ptr: *const _ = &kend;
-        (ptr as u64 + MASK) & !MASK
-    };
-    (PAddr::from_u64(1 << 20), PAddr::from_u64(kend_addr))
-}
-
 /// Reports text segment, read only data, and writable data
 fn kernel_segments() -> (FrameRange, FrameRange, FrameRange) {
     let convert = |sym: &'static u8| {
@@ -223,48 +230,24 @@ fn kernel_segments() -> (FrameRange, FrameRange, FrameRange) {
     (text_range, ro_range, data_range)
 }
 
-/// Discover available memory from the Multiboot structure and populate
-/// `regions`
-fn discover_memory(mb: &Multiboot, regions: &mut RegionVec) {
-    let (kbegin, kend) = kernel_memory_range();
-    debug!("kbegin = {:#X}, kend = {:#X}", kbegin, kend);
-    let mem_regions = mb.memory_regions()
-                        .expect("Could not find Multiboot memory map");
-    for region in mem_regions {
-        let start = PAddr::from_u64(region.base_address());
-        let end = PAddr::from_u64(region.base_address() + region.length());
-        let mem_type = match region.memory_type() {
-            MemoryType::RAM => "RAM",
-            MemoryType::Unusable => "Unusable",
-        };
-        info!("{:#17X} - {:#17X}: {}", start, end, mem_type);
-        if region.memory_type() == MemoryType::RAM {
-            let mut reg = MemoryRegion::new(start, end);
-            reg.trim_below(kend);
-            reg.trim_above(kbegin);
-            if reg.start < reg.end {
-                if let Err(e) = regions.push(reg) {
-                    warn!("Could not store usable region {:#?}: {:?}",
-                          region,
-                          e)
-                }
-            }
-        }
-    }
-}
-
 const INITIAL_MAP: PAddr = PAddr::from_u64(1 << 30);
 
 /// Populate the memory allocator with accessible frames
 fn populate_allocator<Allocator: FrameAllocator>(regions: &RegionVec,
                                                  allocator: &Allocator) {
+    let boot_begin = {
+        extern "C" {
+            static boot_begin: u8;
+        }
+        let ptr: *const _ = &boot_begin;
+        PAddr::from_u64(ptr as u64)
+    };
     let accessible_frames = regions.iter().filter_map(|reg| {
-        let start_frame = Frame::up(reg.start);
-        let end_frame = Frame::down(if reg.end < INITIAL_MAP {
-            reg.end
-        } else {
-            INITIAL_MAP
-        });
+        let mut region = *reg;
+        region.trim_above(INITIAL_MAP);
+        region.trim_above(boot_begin);
+        let start_frame = Frame::up(region.start);
+        let end_frame = Frame::down(region.end);
         let range = FrameRange::new(start_frame, end_frame);
         if start_frame.start_address() >= INITIAL_MAP || range.nframes() == 0 {
             None
@@ -274,6 +257,21 @@ fn populate_allocator<Allocator: FrameAllocator>(regions: &RegionVec,
     });
     for range in accessible_frames {
         unsafe { allocator.free_range_manual(range) };
+    }
+}
+
+fn create_runtime_pagetable<Allocator: FrameAllocator>
+    (allocator: &Allocator)
+     -> (Frame, PageTable) {
+    let frame = allocator.allocate_manual()
+                         .expect("Could not allocate frame for new PageTable");
+    for b in initial_frame_to_slice(frame).iter_mut() {
+        *b = 0;
+    }
+    unsafe {
+        let table = (frame.start_address().as_u64() +
+                     0xFFFFFFFFC0000000) as *mut PML4;
+        (frame, PageTable::new(table))
     }
 }
 
@@ -316,6 +314,18 @@ fn map_free_memory<Allocator: FrameAllocator>(page_table: &mut PageTable,
                 initial_frame_to_slice);
         }
     }
+}
+
+fn map_kernel<Allocator>(page_table: &mut PageTable, allocator: &Allocator)
+    where Allocator: FrameAllocator
+{
+    let (text_range, ro_range, data_range) = kernel_segments();
+    map_range(page_table, text_range, PT_P | PT_G, allocator);
+    map_range(page_table, ro_range, PT_P | PT_G | PT_XD, allocator);
+    map_range(page_table,
+              data_range,
+              PT_P | PT_RW | PT_G | PT_XD,
+              allocator);
 }
 
 fn map_range<Allocator>(page_table: &mut PageTable,
@@ -365,6 +375,76 @@ fn map_stack<Allocator>(page_table: &mut PageTable,
             initial_frame_to_slice);
     }
     kbegin_page.start_address()
+}
+
+extern "C" {
+    fn switch_to_runtime_pagetable(stack: u64,
+                                   pml4: u64,
+                                   cb: extern "C" fn() -> !)
+                                   -> !;
+}
+
+fn free_boot_memory<Allocator>(allocator: &Allocator)
+    where Allocator: FrameAllocator
+{
+    let boot_begin = {
+        extern "C" {
+            static boot_begin: u8;
+        }
+        let ptr: *const _ = &boot_begin;
+        PAddr::from_u64(ptr as u64)
+    };
+    let kbegin = {
+        extern "C" {
+            static kbegin: u8;
+        }
+        let ptr: *const _ = &kbegin;
+        PAddr::from_u64(ptr as u64)
+    };
+    let start_frame = Frame::up(boot_begin);
+    let end_frame = Frame::down(kbegin);
+    let range = FrameRange::new(start_frame, end_frame);
+    unsafe {
+        allocator.free_range_manual(range);
+    }
+}
+
+fn free_upper_memory<Allocator>(regions: &RegionVec, allocator: &Allocator)
+    where Allocator: FrameAllocator
+{
+    let accessible_frames = regions.iter().filter_map(|reg| {
+        let mut region = *reg;
+        region.trim_below(INITIAL_MAP);
+        let start_frame = Frame::up(region.start);
+        let end_frame = Frame::down(region.end);
+        let range = FrameRange::new(start_frame, end_frame);
+        if end_frame.start_address() <= INITIAL_MAP || range.nframes() == 0 {
+            None
+        } else {
+            Some(range)
+        }
+    });
+    for range in accessible_frames {
+        unsafe { allocator.free_range_manual(range) };
+    }
+}
+
+fn reset_gdt() {
+    let gdt_ptr = {
+        let gdtp: *const _ = &*GDT;
+        let gdt_size = (mem::size_of::<SegmentDescriptor>() * GDT.len() -
+                        1) as u16;
+        DescriptorTablePointer {
+            limit: gdt_size,
+            base: gdtp as u64,
+        }
+    };
+    unsafe {
+        lgdt(&gdt_ptr);
+        load_cs(SegmentSelector::new(1));
+        load_ss(SegmentSelector::new(2));
+    }
+
 }
 
 fn map<'a, Allocator, F>(page_table: &'a mut PageTable,

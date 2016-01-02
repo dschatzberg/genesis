@@ -28,6 +28,7 @@ KERNEL_PHYS_MAP = 0xFFFFFFFFC0000000;
 SECTIONS {
          /* Lower half */
          . = KERNEL_LMA;
+         boot_begin = .;
 
          .mb_header : {
            LONG(mb_magic)
