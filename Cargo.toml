@@ -15,6 +15,7 @@ name = "genesis"
 crate-type = ["staticlib"]
 
 [dependencies]
+clippy = "0.0.35"
 fixedvec = "0.2"
 multiboot = "0.2"
 rlibc = "0.1"
