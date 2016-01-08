@@ -15,7 +15,6 @@
 #![feature(asm, const_fn, lang_items, plugin)]
 #![no_std]
 
-#![allow(empty_loop)]
 #![deny(missing_docs,
         missing_debug_implementations, missing_copy_implementations,
         trivial_casts, trivial_numeric_casts,
