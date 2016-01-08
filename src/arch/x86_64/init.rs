@@ -13,17 +13,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 use super::serial;
-use core::mem::transmute;
+use core::mem;
 use core::slice;
 use fixedvec::FixedVec;
-use std::mem;
 use memory::*;
 use memory::first_fit_allocator::FirstFitAllocator;
 use multiboot::{self, MemoryType, Multiboot};
 use spin;
-use std::u32;
-use x86::segmentation::*;
-use x86::dtables::*;
+use super::gdt;
 
 /// Initial Rust entry point.
 #[no_mangle]
@@ -61,7 +58,7 @@ extern "C" fn arch_continue_init() -> ! {
     free_boot_memory(allocator);
     free_upper_memory(&regions, allocator);
 
-    reset_gdt();
+    gdt::reset();
     loop {}
 }
 
@@ -136,7 +133,7 @@ unsafe fn early_paddr_to_slice<'a>(p: multiboot::PAddr,
                                    sz: usize)
                                    -> Option<&'a [u8]> {
     if (sz < (1 << 30)) && ((p + sz as u64) < (1 << 30)) {
-        let ptr = transmute(p + INITIAL_VIRTUAL_OFFSET);
+        let ptr = mem::transmute(p + INITIAL_VIRTUAL_OFFSET);
         Some(slice::from_raw_parts(ptr, sz))
     } else {
         None
@@ -184,17 +181,6 @@ lazy_static! {
             spin::RwLock::new(FixedVec::new(&mut REGIONS_MEM))
         }
     };
-
-    static ref GDT: [SegmentDescriptor; 5] =
-        [SegmentDescriptor::empty(), // NULL Descriptor
-         SegmentDescriptor::new(0, u32::MAX) |
-         TYPE_C_ER | DESC_S | DESC_DPL0 | DESC_P | DESC_L | DESC_G,
-         SegmentDescriptor::new(0, u32::MAX) |
-         TYPE_D_RW | DESC_S | DESC_DPL0 | DESC_P,
-         SegmentDescriptor::new(0, u32::MAX) |
-         TYPE_D_RW | DESC_S | DESC_DPL3 | DESC_P,
-         SegmentDescriptor::new(0, u32::MAX) |
-         TYPE_C_ER | DESC_S | DESC_DPL3 | DESC_P | DESC_L | DESC_G];
 }
 
 /// Reports text segment, read only data, and writable data
@@ -279,7 +265,7 @@ type PageSlice = [u8; PAGE_SIZE as usize];
 
 fn initial_frame_to_slice<'a>(frame: Frame) -> &'a mut PageSlice {
     unsafe {
-        transmute(frame.start_address().as_u64() + INITIAL_VIRTUAL_OFFSET)
+        mem::transmute(frame.start_address().as_u64() + INITIAL_VIRTUAL_OFFSET)
     }
 }
 
@@ -429,24 +415,6 @@ fn free_upper_memory<Allocator>(regions: &RegionVec, allocator: &Allocator)
     }
 }
 
-fn reset_gdt() {
-    let gdt_ptr = {
-        let gdtp: *const _ = &*GDT;
-        let gdt_size = (mem::size_of::<SegmentDescriptor>() * GDT.len() -
-                        1) as u16;
-        DescriptorTablePointer {
-            limit: gdt_size,
-            base: gdtp as u64,
-        }
-    };
-    unsafe {
-        lgdt(&gdt_ptr);
-        load_cs(SegmentSelector::new(1));
-        load_ss(SegmentSelector::new(2));
-    }
-
-}
-
 fn map<'a, Allocator, F>(page_table: &'a mut PageTable,
                          page: Page,
                          frame: Frame,
@@ -468,7 +436,7 @@ fn map<'a, Allocator, F>(page_table: &'a mut PageTable,
                                         PML4_P | PML4_RW);
     }
     let pdpt: &mut PDPT = unsafe {
-        transmute(f(Frame::down(pml4[pml4_idx].get_address())))
+        mem::transmute(f(Frame::down(pml4[pml4_idx].get_address())))
     };
     let pdpt_idx = pdpt_index(page.start_address());
     if pdpt[pdpt_idx].is_empty() {
@@ -482,7 +450,7 @@ fn map<'a, Allocator, F>(page_table: &'a mut PageTable,
     }
 
     let pd: &mut PD = unsafe {
-        transmute(f(Frame::down(pdpt[pdpt_idx].get_address())))
+        mem::transmute(f(Frame::down(pdpt[pdpt_idx].get_address())))
     };
     let pd_idx = pd_index(page.start_address());
     if pd[pd_idx].is_empty() {
@@ -495,7 +463,7 @@ fn map<'a, Allocator, F>(page_table: &'a mut PageTable,
     }
 
     let pt: &mut PT = unsafe {
-        transmute(f(Frame::down(pd[pd_idx].get_address())))
+        mem::transmute(f(Frame::down(pd[pd_idx].get_address())))
     };
     let pt_idx = pt_index(page.start_address());
     assert!(pt[pt_idx].is_empty());

@@ -14,6 +14,8 @@
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 pub use super::x86::serial;
 
+pub mod gdt;
+
 /// Architecture specific boot code.
 pub mod init;
 
