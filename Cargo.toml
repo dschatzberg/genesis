@@ -18,18 +18,13 @@ crate-type = ["staticlib"]
 clippy = "0.0.67"
 fixedvec = "0.2"
 multiboot = "0.2"
-rlibc = "0.1"
-spin = "0.3"
-
-[dependencies.bitflags]
-git = "https://github.com/phil-opp/bitflags.git"
-branch = "no_std"
+rlibc = "1.0"
+spin = "0.4"
+bitflags = "0.7"
 
 [dependencies.lazy_static]
-version = "0.1"
-features = ["nostd"]
-git = "https://github.com/dschatzberg/lazy-static.rs"
-branch = "spin"
+version = "0.2"
+features = ["spin_no_std"]
 
 [dependencies.x86]
 git = "https://github.com/dschatzberg/rust-x86.git"
