@@ -116,7 +116,7 @@ clean-objs:
 clean-toolchain:
 	$(MAKE) -C toolchain clean
 
-dist-clean: clean-cargo clean-core clean-kernel clean-objs clean-toolchain
+distclean: clean-cargo clean-core clean-kernel clean-objs clean-toolchain
 
 # core
 core: $(CORE_LIB)
