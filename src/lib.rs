@@ -31,19 +31,21 @@ extern crate bitflags;
 extern crate fixedvec;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate log;
 extern crate multiboot;
+#[macro_use]
+extern crate once;
 extern crate rlibc;
 extern crate spin;
 extern crate x86;
 
 pub use self::arch::init as arch_init;
 
-#[macro_use]
-mod log;
-
 mod arch;
 mod console {
     pub use arch::serial::*;
 }
+mod logimpl;
 mod memory;
 mod unwind;

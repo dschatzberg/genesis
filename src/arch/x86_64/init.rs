@@ -66,6 +66,7 @@ fn initialize_console() {
     unsafe {
         serial::init();
     }
+    logimpl::Logger::init();
     debug!("Serial Initialized");
 }
 
