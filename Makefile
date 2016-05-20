@@ -61,7 +61,8 @@ endif
 # Misc info
 RUSTC_PREFIX ?= rustc-nightly
 RUSTC_SRC_TAR ?= $(RUSTC_PREFIX)-src.tar.gz
-RUSTC_SRC_URL ?= http://static.rust-lang.org/dist/$(RUSTC_SRC_TAR)
+RUSTC_VERSION ?= 2016-05-18
+RUSTC_SRC_URL ?= http://static.rust-lang.org/dist/$(RUSTC_VERSION)/$(RUSTC_SRC_TAR)
 
 # Source
 ARCH_SRCS ?= $(wildcard $(ARCH_DIR)/*.s)
