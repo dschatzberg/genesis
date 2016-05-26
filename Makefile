@@ -61,7 +61,7 @@ endif
 # Misc info
 RUSTC_PREFIX ?= rustc-nightly
 RUSTC_SRC_TAR ?= $(RUSTC_PREFIX)-src.tar.gz
-RUSTC_VERSION ?= 2016-05-18
+RUSTC_VERSION ?= 2016-05-22
 RUSTC_SRC_URL ?= http://static.rust-lang.org/dist/$(RUSTC_VERSION)/$(RUSTC_SRC_TAR)
 
 # Source
@@ -123,7 +123,7 @@ distclean: clean-cargo clean-core clean-kernel clean-objs clean-toolchain
 core: $(CORE_LIB)
 
 $(CORE_LIB): $(CORE_DIR)/src/lib.rs $(TARGET_SPEC) Makefile | $(BUILD_DIR)
-	$(RUSTC) -O $(RUSTCFLAGS) --target=$(TARGET_SPEC) -o $@ $<
+	$(RUSTC) $(RUSTCFLAGS) --target=$(TARGET_SPEC) -o $@ $<
 
 $(CORE_DIR)/src:
 	$(MKDIR) -p $(CORE_DIR)/src

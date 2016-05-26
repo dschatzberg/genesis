@@ -3,3 +3,4 @@ Cargo.lock
 config.mk
 Makefile.in
 target
+target-install

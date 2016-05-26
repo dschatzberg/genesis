@@ -55,17 +55,17 @@ impl<'a> FrameAllocator for FirstFitAllocator<'a> {
     fn allocate_range_manual(&self, nframes: u64) -> Option<FrameRange> {
         let mut frames = self.frames.lock();
         frames.iter()
-              .position(|range| range.nframes() >= nframes)
-              .map(|index| {
-                  let ret = FrameRange::new(frames[index].lower(),
-                                            frames[index].lower() + nframes);
-                  if frames[index].nframes() == nframes {
-                      frames.remove(index);
-                  } else {
-                      frames[index].trim_front(nframes);
-                  }
-                  ret
-              })
+            .position(|range| range.nframes() >= nframes)
+            .map(|index| {
+                let ret = FrameRange::new(frames[index].lower(),
+                                          frames[index].lower() + nframes);
+                if frames[index].nframes() == nframes {
+                    frames.remove(index);
+                } else {
+                    frames[index].trim_front(nframes);
+                }
+                ret
+            })
     }
 
     unsafe fn free_range_manual(&self, range: FrameRange) {
@@ -73,7 +73,7 @@ impl<'a> FrameAllocator for FirstFitAllocator<'a> {
         let ind = {
             let slice = frames.as_slice();
             slice.binary_search_by(|r| r.partial_cmp(&range).unwrap())
-                 .unwrap_err()
+                .unwrap_err()
         };
         let prev_coalesce = if ind > 0 {
             if let Some(prev) = frames.get(ind - 1) {

@@ -114,7 +114,7 @@ impl<'a, T: 'a + FrameAllocator> Drop for FrameRangeHandle<'a, T> {
     }
 }
 
-pub trait FrameAllocator : Sync + Sized {
+pub trait FrameAllocator: Sync + Sized {
     fn allocate_manual(&self) -> Option<Frame>;
     unsafe fn free_manual(&self, Frame);
 

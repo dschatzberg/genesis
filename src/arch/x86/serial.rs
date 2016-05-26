@@ -32,16 +32,20 @@ const LINE_CTRL_REG_DLAB: u8 = 1 << 7;
 const LINE_STATUS_REG: u16 = 5;
 const LINE_STATUS_REG_THR_EMPTY: u8 = 1 << 5;
 
-pub unsafe fn init() {
-    ioport::out(PORT_BASE + INT_ENABLE, 0u8); // disable interrupts
+pub fn init() {
+    assert_has_not_been_called!("serial::init() function \
+                                 must only be called once");
+    unsafe {
+        ioport::out(PORT_BASE + INT_ENABLE, 0u8); // disable interrupts
 
-    ioport::out(PORT_BASE + LINE_CTRL_REG, LINE_CTRL_REG_DLAB); // enable dlab
-    // XXX: hard coded 115200 baud
-    ioport::out(PORT_BASE + BAUD_DIV_LSB, 1u8);
-    ioport::out(PORT_BASE + BAUD_DIV_MSB, 0u8);
+        ioport::out(PORT_BASE + LINE_CTRL_REG, LINE_CTRL_REG_DLAB); // enable dlab
+        // XXX: hard coded 115200 baud
+        ioport::out(PORT_BASE + BAUD_DIV_LSB, 1u8);
+        ioport::out(PORT_BASE + BAUD_DIV_MSB, 0u8);
 
-    // XXX: hard coded as 8N1 (8 bits, no parity, one stop bit)
-    ioport::out(PORT_BASE + LINE_CTRL_REG, LINE_CTRL_REG_CHARLEN8);
+        // XXX: hard coded as 8N1 (8 bits, no parity, one stop bit)
+        ioport::out(PORT_BASE + LINE_CTRL_REG, LINE_CTRL_REG_CHARLEN8);
+    }
 }
 
 unsafe fn is_transmit_empty() -> bool {

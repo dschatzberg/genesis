@@ -21,10 +21,15 @@ use memory::first_fit_allocator::FirstFitAllocator;
 use multiboot::{self, MemoryType, Multiboot};
 use spin;
 use super::gdt;
+use logimpl;
 
 /// Initial Rust entry point.
 #[no_mangle]
 pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
+    let terminal = 0xb8000 as *mut u16;
+    unsafe {
+        *terminal = 'H' as u16 | 15 << 8;
+    }
     initialize_console();
 
     process_multiboot(multiboot_addr);
@@ -50,7 +55,7 @@ pub extern "C" fn arch_init(multiboot_addr: PAddr) -> ! {
     }
 }
 
-extern "C" fn arch_continue_init() -> ! {
+extern "C" fn arch_continue_init(stack: u64) -> ! {
     let regions = REGIONS.read();
     let allocator = FirstFitAllocator::get();
     // Now that we are on the runtime page table, we can free boot and higher
@@ -58,14 +63,15 @@ extern "C" fn arch_continue_init() -> ! {
     free_boot_memory(allocator);
     free_upper_memory(&regions, allocator);
 
-    gdt::reset();
+    unsafe {
+        gdt::reset(stack);
+    }
+    debug!("End");
     loop {}
 }
 
 fn initialize_console() {
-    unsafe {
-        serial::init();
-    }
+    serial::init();
     logimpl::Logger::init();
     debug!("Serial Initialized");
 }
@@ -73,12 +79,12 @@ fn initialize_console() {
 fn process_multiboot(multiboot_addr: PAddr) {
     debug!("Multiboot Structure loaded at {:#X}", multiboot_addr);
     let mb = unsafe {
-                 Multiboot::new(multiboot_addr.as_u64(), early_paddr_to_slice)
-             }
-             .expect("Could not access a Multiboot structure");
+            Multiboot::new(multiboot_addr.as_u64(), early_paddr_to_slice)
+        }
+        .expect("Could not access a Multiboot structure");
 
     process_multiboot_memory(mb.memory_regions()
-                               .expect("Could not find Multiboot memory map"));
+        .expect("Could not find Multiboot memory map"));
 
     // TODO: process cmdline and modules
 }
@@ -251,7 +257,7 @@ fn create_runtime_pagetable<Allocator: FrameAllocator>
     (allocator: &Allocator)
      -> (Frame, PageTable) {
     let frame = allocator.allocate_manual()
-                         .expect("Could not allocate frame for new PageTable");
+        .expect("Could not allocate frame for new PageTable");
     for b in initial_frame_to_slice(frame).iter_mut() {
         *b = 0;
     }
@@ -352,7 +358,7 @@ fn map_stack<Allocator>(page_table: &mut PageTable,
     };
     for i in 1..3 {
         let frame = allocator.allocate_manual()
-                             .expect("Could not allocate frame for stack");
+            .expect("Could not allocate frame for stack");
         let page = kbegin_page - i;
         map(page_table,
             page,
@@ -367,7 +373,7 @@ fn map_stack<Allocator>(page_table: &mut PageTable,
 extern "C" {
     fn switch_to_runtime_pagetable(stack: u64,
                                    pml4: u64,
-                                   cb: extern "C" fn() -> !)
+                                   cb: extern "C" fn(u64) -> !)
                                    -> !;
 }
 
@@ -429,7 +435,7 @@ fn map<'a, Allocator, F>(page_table: &'a mut PageTable,
     let pml4_idx = pml4_index(page.start_address());
     if pml4[pml4_idx].is_empty() {
         let frame = allocator.allocate_manual()
-                             .expect("Could not allocate frame for PDPT");
+            .expect("Could not allocate frame for PDPT");
         for b in f(frame).iter_mut() {
             *b = 0;
         }
@@ -442,7 +448,7 @@ fn map<'a, Allocator, F>(page_table: &'a mut PageTable,
     let pdpt_idx = pdpt_index(page.start_address());
     if pdpt[pdpt_idx].is_empty() {
         let frame = allocator.allocate_manual()
-                             .expect("Could not allocate frame for PD");
+            .expect("Could not allocate frame for PD");
         for b in f(frame).iter_mut() {
             *b = 0;
         }
@@ -456,16 +462,15 @@ fn map<'a, Allocator, F>(page_table: &'a mut PageTable,
     let pd_idx = pd_index(page.start_address());
     if pd[pd_idx].is_empty() {
         let frame = allocator.allocate_manual()
-                             .expect("Could not allocate frame for PT");
+            .expect("Could not allocate frame for PT");
         for b in f(frame).iter_mut() {
             *b = 0;
         }
         pd[pd_idx] = PDEntry::new(frame.start_address(), PD_P | PD_RW);
     }
 
-    let pt: &mut PT = unsafe {
-        mem::transmute(f(Frame::down(pd[pd_idx].get_address())))
-    };
+    let pt: &mut PT =
+        unsafe { mem::transmute(f(Frame::down(pd[pd_idx].get_address()))) };
     let pt_idx = pt_index(page.start_address());
     assert!(pt[pt_idx].is_empty());
     pt[pt_idx] = PTEntry::new(frame.start_address(), flags);
