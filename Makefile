@@ -20,7 +20,11 @@ TARGET_TRIPLE ?= $(ARCH)-none-elf
 
 # Directories
 ARCH_DIR ?= $(CURDIR)/src/arch/$(ARCH)
-BUILD_DIR ?= $(CURDIR)/build/$(ARCH)
+ifeq ($(DEBUG),1)
+BUILD_DIR ?= $(CURDIR)/build/$(ARCH)/debug
+else
+BUILD_DIR ?= $(CURDIR)/build/$(ARCH)/release
+endif
 ifeq ($(DEBUG),1)
 CARGO_OUT_DIR ?= $(CURDIR)/target/target/debug
 else
@@ -65,10 +69,10 @@ RUSTC_VERSION ?= 2016-05-22
 RUSTC_SRC_URL ?= http://static.rust-lang.org/dist/$(RUSTC_VERSION)/$(RUSTC_SRC_TAR)
 
 # Source
-ARCH_SRCS ?= $(wildcard $(ARCH_DIR)/*.s)
+ARCH_SRCS ?= $(wildcard $(ARCH_DIR)/*.S)
 
 # Objects
-ARCH_OBJS ?= $(patsubst $(ARCH_DIR)/%.s,$(BUILD_DIR)/%.o,$(ARCH_SRCS))
+ARCH_OBJS ?= $(patsubst $(ARCH_DIR)/%.S,$(BUILD_DIR)/%.o,$(ARCH_SRCS))
 CORE_LIB ?= $(BUILD_DIR)/libcore.rlib
 KERNEL_LIB ?= $(CARGO_OUT_DIR)/libgenesis.a
 
@@ -88,7 +92,7 @@ all: $(KERNEL)
 $(BUILD_DIR):
 	$(MKDIR) -p $(BUILD_DIR)
 
-$(BUILD_DIR)/%.o: $(ARCH_DIR)/%.s Makefile | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: $(ARCH_DIR)/%.S Makefile | $(BUILD_DIR)
 	$(CROSSAS) $(ASFLAGS) -o $@ $<
 
 kernel_lib: core

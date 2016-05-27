@@ -14,9 +14,11 @@
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 pub use super::x86::serial;
 
+/// Loading and manipulating the x86_64 Global Descriptor Table
 pub mod gdt;
-
+/// Loading and manipulating the x86_64 Interrupt Descriptor Table
+pub mod idt;
 /// Architecture specific boot code.
 pub mod init;
-
+/// Memory management routines
 pub mod mem;

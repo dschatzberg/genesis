@@ -12,7 +12,7 @@
 
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
-#![feature(asm, const_fn, lang_items, plugin)]
+#![feature(asm, const_fn, lang_items, plugin, unique)]
 #![no_std]
 
 #![deny(missing_docs,
@@ -40,8 +40,7 @@ extern crate rlibc;
 extern crate spin;
 extern crate x86;
 
-pub use self::arch::init as arch_init;
-
+/// Architecture-specific interfaces
 mod arch;
 mod console {
     pub use arch::serial::*;
@@ -49,3 +48,6 @@ mod console {
 mod logimpl;
 mod memory;
 mod unwind;
+
+pub use arch::arch_init;
+pub use arch::interrupt_handler;

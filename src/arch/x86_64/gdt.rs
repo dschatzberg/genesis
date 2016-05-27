@@ -49,6 +49,7 @@ lazy_static! {
     };
 }
 
+/// Reset the GDT
 pub unsafe fn reset(stack: u64) {
     let gdt_ptr = {
         let gdtp: *const _ = &*GDT;
@@ -62,10 +63,8 @@ pub unsafe fn reset(stack: u64) {
     let mut tss = TSS.write();
     tss.rsp[0] = stack;
 
-    unsafe {
-        lgdt(&gdt_ptr);
-        load_cs(SegmentSelector::new(1));
-        load_ss(SegmentSelector::new(2));
-        load_ltr(SegmentSelector::new(5));
-    }
+    lgdt(&gdt_ptr);
+    load_cs(SegmentSelector::new(1));
+    load_ss(SegmentSelector::new(2));
+    load_ltr(SegmentSelector::new(5));
 }

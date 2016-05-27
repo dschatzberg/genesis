@@ -32,13 +32,15 @@ const LINE_CTRL_REG_DLAB: u8 = 1 << 7;
 const LINE_STATUS_REG: u16 = 5;
 const LINE_STATUS_REG_THR_EMPTY: u8 = 1 << 5;
 
+/// Initialize the Serial Port
 pub fn init() {
     assert_has_not_been_called!("serial::init() function \
                                  must only be called once");
     unsafe {
         ioport::out(PORT_BASE + INT_ENABLE, 0u8); // disable interrupts
 
-        ioport::out(PORT_BASE + LINE_CTRL_REG, LINE_CTRL_REG_DLAB); // enable dlab
+        // enable dlab
+        ioport::out(PORT_BASE + LINE_CTRL_REG, LINE_CTRL_REG_DLAB);
         // XXX: hard coded 115200 baud
         ioport::out(PORT_BASE + BAUD_DIV_LSB, 1u8);
         ioport::out(PORT_BASE + BAUD_DIV_MSB, 0u8);
@@ -58,6 +60,7 @@ unsafe fn putc(c: u8) {
     ioport::out(PORT_BASE + DATA_REG, c);
 }
 
+/// Write `str` to the Serial Port
 pub unsafe fn write_str(s: &str) {
     for c in s.bytes() {
         putc(c);
