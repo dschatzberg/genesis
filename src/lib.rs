@@ -38,6 +38,7 @@ extern crate multiboot;
 extern crate once;
 extern crate rlibc;
 extern crate spin;
+#[macro_use]
 extern crate x86;
 
 /// Architecture-specific interfaces

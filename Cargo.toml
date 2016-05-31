@@ -17,7 +17,7 @@ crate-type = ["staticlib"]
 [dependencies]
 bitflags = "0.7"
 clippy = "0.0.69"
-fixedvec = "=0.2.0"
+fixedvec = "0.2"
 log = { version = "0.3", default-features = false }
 multiboot = "0.2"
 once = "0.3"

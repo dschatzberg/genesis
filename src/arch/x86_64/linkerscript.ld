@@ -50,7 +50,7 @@ SECTIONS {
 
          /* Higher half */
          . = ALIGN(4K) + KERNEL_PHYS_MAP;
-         kbegin = . - KERNEL_PHYS_MAP;
+         kbegin = .;
 
          .text ALIGN(4K) : AT(ADDR(.text) - KERNEL_PHYS_MAP) {
            btext = .;
@@ -75,7 +75,7 @@ SECTIONS {
            *(.gnu.linkonce.b*)
          }
 
-         kend = ALIGN(4K)  - KERNEL_PHYS_MAP;
+         kend = ALIGN(4K);
          edata = .;
 
          .debug_abbrev 0 : { KEEP(*(.debug_abbrev)) }

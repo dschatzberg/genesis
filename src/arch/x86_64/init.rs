@@ -21,6 +21,7 @@ use memory::first_fit_allocator::FirstFitAllocator;
 use multiboot::{self, MemoryType, Multiboot};
 use spin;
 use super::gdt;
+use super::idt;
 use logimpl;
 
 /// Initial Rust entry point.
@@ -66,6 +67,7 @@ extern "C" fn arch_continue_init(stack: u64) -> ! {
     unsafe {
         gdt::reset(stack);
     }
+    idt::init();
     debug!("End");
     loop {}
 }
@@ -109,7 +111,8 @@ fn process_multiboot_memory(mem_regions: multiboot::MemoryMapIter) {
             let ptr: *const _ = &kend;
             (ptr as u64 + MASK) & !MASK
         };
-        (PAddr::from_u64(kbegin_addr), PAddr::from_u64(kend_addr))
+        (PAddr::from_u64(kbegin_addr - INITIAL_VIRTUAL_OFFSET),
+         PAddr::from_u64(kend_addr - INITIAL_VIRTUAL_OFFSET))
     };
     for region in mem_regions {
         let start = PAddr::from_u64(region.base_address());
@@ -392,7 +395,7 @@ fn free_boot_memory<Allocator>(allocator: &Allocator)
             static kbegin: u8;
         }
         let ptr: *const _ = &kbegin;
-        PAddr::from_u64(ptr as u64)
+        PAddr::from_u64(ptr as u64 - INITIAL_VIRTUAL_OFFSET)
     };
     let start_frame = Frame::up(boot_begin);
     let end_frame = Frame::down(kbegin);

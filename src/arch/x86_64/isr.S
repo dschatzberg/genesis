@@ -17,7 +17,7 @@
         .if \has_error_code == 0
         pushq $0
         .endif
-        pushq $num
+        pushq $\num
         jmp int_common
 .endm
 
@@ -56,9 +56,7 @@ int_common:
         PUSHQ_CFI %r15
         mov 120(%rsp), %rdi
         mov %rsp, %rsi
-        sub $8, %rsp
         call interrupt_handler
-        add $8, %rsp
         POPQ_CFI %r15
         POPQ_CFI %r14
         POPQ_CFI %r13
