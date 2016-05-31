@@ -12,9 +12,6 @@
 
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
-#[cfg(target_arch = "x86_64")]
-pub use self::x86_64::idt;
-
 #[cfg(any(target_arch = "x86",target_arch = "x86_64"))]
 pub use self::x86::serial;
 
@@ -32,7 +29,7 @@ pub mod mem {
 }
 
 #[cfg(target_arch = "x86_64")]
-pub use self::x86_64::init::arch_init;
+pub use self::x86_64::arch_init;
 
 #[cfg(target_arch = "x86_64")]
-pub use self::x86_64::idt::interrupt_handler;
+pub use self::x86_64::interrupt_handler;

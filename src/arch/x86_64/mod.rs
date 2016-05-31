@@ -15,10 +15,13 @@
 pub use super::x86::serial;
 
 /// Loading and manipulating the x86_64 Global Descriptor Table
-pub mod gdt;
+mod gdt;
 /// Loading and manipulating the x86_64 Interrupt Descriptor Table
-pub mod idt;
+mod idt;
 /// Architecture specific boot code.
-pub mod init;
+mod init;
 /// Memory management routines
 pub mod mem;
+
+pub use self::init::arch_init;
+pub use self::idt::interrupt_handler;
