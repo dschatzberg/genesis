@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["VecArgs","Represent the pre-expansion arguments of a `vec!` invocation."]],"fn":[["unexpand_vec","Returns the arguments of the `vec!` macro if this expression was expanded from `vec!`."]],"static":[["USELESS_VEC",""]],"struct":[["UselessVec",""]]});

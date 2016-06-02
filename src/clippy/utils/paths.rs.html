@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/clippy-0.0.69/src/utils/paths.rs`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang">
+
+    <title>paths.rs.html -- source</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content source"><pre class="line-numbers"><span id="1"> 1</span>
+<span id="2"> 2</span>
+<span id="3"> 3</span>
+<span id="4"> 4</span>
+<span id="5"> 5</span>
+<span id="6"> 6</span>
+<span id="7"> 7</span>
+<span id="8"> 8</span>
+<span id="9"> 9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+</pre><pre class='rust '>
+<span class='doccomment'>//! This module contains paths to types and functions Clippy needs to know about.</span>
+
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>BEGIN_PANIC</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;rt&quot;</span>, <span class='string'>&quot;begin_panic&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>BINARY_HEAP</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;collections&quot;</span>, <span class='string'>&quot;binary_heap&quot;</span>, <span class='string'>&quot;BinaryHeap&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>BOX</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;boxed&quot;</span>, <span class='string'>&quot;Box&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>BOX_NEW</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>4</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;boxed&quot;</span>, <span class='string'>&quot;Box&quot;</span>, <span class='string'>&quot;new&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>BTREEMAP</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>4</span>] <span class='op'>=</span> [<span class='string'>&quot;collections&quot;</span>, <span class='string'>&quot;btree&quot;</span>, <span class='string'>&quot;map&quot;</span>, <span class='string'>&quot;BTreeMap&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>BTREEMAP_ENTRY</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>4</span>] <span class='op'>=</span> [<span class='string'>&quot;collections&quot;</span>, <span class='string'>&quot;btree&quot;</span>, <span class='string'>&quot;map&quot;</span>, <span class='string'>&quot;Entry&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>BTREESET</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>4</span>] <span class='op'>=</span> [<span class='string'>&quot;collections&quot;</span>, <span class='string'>&quot;btree&quot;</span>, <span class='string'>&quot;set&quot;</span>, <span class='string'>&quot;BTreeSet&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CLONE</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>4</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;clone&quot;</span>, <span class='string'>&quot;Clone&quot;</span>, <span class='string'>&quot;clone&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CLONE_TRAIT</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;clone&quot;</span>, <span class='string'>&quot;Clone&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CMP_MAX</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;cmp&quot;</span>, <span class='string'>&quot;max&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CMP_MIN</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;cmp&quot;</span>, <span class='string'>&quot;min&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>COW</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;collections&quot;</span>, <span class='string'>&quot;borrow&quot;</span>, <span class='string'>&quot;Cow&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CSTRING_NEW</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>4</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;ffi&quot;</span>, <span class='string'>&quot;CString&quot;</span>, <span class='string'>&quot;new&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>DEBUG_FMT_METHOD</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>4</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;fmt&quot;</span>, <span class='string'>&quot;Debug&quot;</span>, <span class='string'>&quot;fmt&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>DEFAULT_TRAIT</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;default&quot;</span>, <span class='string'>&quot;Default&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>DISPLAY_FMT_METHOD</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>4</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;fmt&quot;</span>, <span class='string'>&quot;Display&quot;</span>, <span class='string'>&quot;fmt&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>DROP</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;mem&quot;</span>, <span class='string'>&quot;drop&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>FMT_ARGUMENTS_NEWV1</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>4</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;fmt&quot;</span>, <span class='string'>&quot;Arguments&quot;</span>, <span class='string'>&quot;new_v1&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>FMT_ARGUMENTV1_NEW</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>4</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;fmt&quot;</span>, <span class='string'>&quot;ArgumentV1&quot;</span>, <span class='string'>&quot;new&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>HASH</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>2</span>] <span class='op'>=</span> [<span class='string'>&quot;hash&quot;</span>, <span class='string'>&quot;Hash&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>HASHMAP</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>5</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;collections&quot;</span>, <span class='string'>&quot;hash&quot;</span>, <span class='string'>&quot;map&quot;</span>, <span class='string'>&quot;HashMap&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>HASHMAP_ENTRY</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>5</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;collections&quot;</span>, <span class='string'>&quot;hash&quot;</span>, <span class='string'>&quot;map&quot;</span>, <span class='string'>&quot;Entry&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>HASHSET</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>5</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;collections&quot;</span>, <span class='string'>&quot;hash&quot;</span>, <span class='string'>&quot;set&quot;</span>, <span class='string'>&quot;HashSet&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IO_PRINT</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;io&quot;</span>, <span class='string'>&quot;_print&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>ITERATOR</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>4</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;iter&quot;</span>, <span class='string'>&quot;iterator&quot;</span>, <span class='string'>&quot;Iterator&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>LINKED_LIST</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;collections&quot;</span>, <span class='string'>&quot;linked_list&quot;</span>, <span class='string'>&quot;LinkedList&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MEM_FORGET</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;mem&quot;</span>, <span class='string'>&quot;forget&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MUTEX</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>4</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;sync&quot;</span>, <span class='string'>&quot;mutex&quot;</span>, <span class='string'>&quot;Mutex&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>OPEN_OPTIONS</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;fs&quot;</span>, <span class='string'>&quot;OpenOptions&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>OPS_MODULE</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>2</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;ops&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>OPTION</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;option&quot;</span>, <span class='string'>&quot;Option&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>RANGE</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;ops&quot;</span>, <span class='string'>&quot;Range&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>RANGE_FROM</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;ops&quot;</span>, <span class='string'>&quot;RangeFrom&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>RANGE_FROM_STD</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;ops&quot;</span>, <span class='string'>&quot;RangeFrom&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>RANGE_FULL</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;ops&quot;</span>, <span class='string'>&quot;RangeFull&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>RANGE_FULL_STD</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;ops&quot;</span>, <span class='string'>&quot;RangeFull&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>RANGE_INCLUSIVE</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;ops&quot;</span>, <span class='string'>&quot;RangeInclusive&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>RANGE_INCLUSIVE_NON_EMPTY</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>4</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;ops&quot;</span>, <span class='string'>&quot;RangeInclusive&quot;</span>, <span class='string'>&quot;NonEmpty&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>RANGE_INCLUSIVE_NON_EMPTY_STD</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>4</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;ops&quot;</span>, <span class='string'>&quot;RangeInclusive&quot;</span>, <span class='string'>&quot;NonEmpty&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>RANGE_INCLUSIVE_STD</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;ops&quot;</span>, <span class='string'>&quot;RangeInclusive&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>RANGE_STD</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;ops&quot;</span>, <span class='string'>&quot;Range&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>RANGE_TO</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;ops&quot;</span>, <span class='string'>&quot;RangeTo&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>RANGE_TO_INCLUSIVE</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;ops&quot;</span>, <span class='string'>&quot;RangeToInclusive&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>RANGE_TO_INCLUSIVE_STD</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;ops&quot;</span>, <span class='string'>&quot;RangeToInclusive&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>RANGE_TO_STD</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;ops&quot;</span>, <span class='string'>&quot;RangeTo&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>REGEX</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;regex&quot;</span>, <span class='string'>&quot;re_unicode&quot;</span>, <span class='string'>&quot;Regex&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>REGEX_NEW</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;regex&quot;</span>, <span class='string'>&quot;Regex&quot;</span>, <span class='string'>&quot;new&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>RESULT</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;result&quot;</span>, <span class='string'>&quot;Result&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>STRING</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;collections&quot;</span>, <span class='string'>&quot;string&quot;</span>, <span class='string'>&quot;String&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>TRANSMUTE</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>4</span>] <span class='op'>=</span> [<span class='string'>&quot;core&quot;</span>, <span class='string'>&quot;intrinsics&quot;</span>, <span class='string'>&quot;&quot;</span>, <span class='string'>&quot;transmute&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>VEC</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;collections&quot;</span>, <span class='string'>&quot;vec&quot;</span>, <span class='string'>&quot;Vec&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>VEC_DEQUE</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;collections&quot;</span>, <span class='string'>&quot;vec_deque&quot;</span>, <span class='string'>&quot;VecDeque&quot;</span>];
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>VEC_FROM_ELEM</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>3</span>] <span class='op'>=</span> [<span class='string'>&quot;std&quot;</span>, <span class='string'>&quot;vec&quot;</span>, <span class='string'>&quot;from_elem&quot;</span>];
+</pre>
+</section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../../";
+        window.currentCrate = "clippy";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../../jquery.js"></script>
+    <script src="../../../main.js"></script>
+    
+    <script defer src="../../../search-index.js"></script>
+</body>
+</html>

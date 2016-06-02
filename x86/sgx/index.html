@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `sgx` mod in crate `x86`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, sgx">
+
+    <title>x86::sgx - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>x86</a></p><script>window.sidebarCurrent = {name: 'sgx', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>x86</a>::<wbr><a class='mod' href=''>sgx</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-2690' class='srclink' href='../../src/x86/sgx.rs.html#1-351' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Program x86 enclaves.</p>
+</div><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_create.html'
+                                  title='x86::sgx::encls_create'>encls_create</a></td>
+                           <td class='docblock short'>
+                                <p>Create an SECS page in the Enclave Page Cache</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_eadd.html'
+                                  title='x86::sgx::encls_eadd'>encls_eadd</a></td>
+                           <td class='docblock short'>
+                                <p>Add a Page to an Uninitialized Enclave.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_eaug.html'
+                                  title='x86::sgx::encls_eaug'>encls_eaug</a></td>
+                           <td class='docblock short'>
+                                <p>Add a Page to an Initialized Enclave.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_eblock.html'
+                                  title='x86::sgx::encls_eblock'>encls_eblock</a></td>
+                           <td class='docblock short'>
+                                <p>Mark a page in EPC as Blocked.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_edbgrd.html'
+                                  title='x86::sgx::encls_edbgrd'>encls_edbgrd</a></td>
+                           <td class='docblock short'>
+                                <p>Read From a Debug Enclave.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_edbgwr.html'
+                                  title='x86::sgx::encls_edbgwr'>encls_edbgwr</a></td>
+                           <td class='docblock short'>
+                                <p>Write to a Debug Enclave.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_eextend.html'
+                                  title='x86::sgx::encls_eextend'>encls_eextend</a></td>
+                           <td class='docblock short'>
+                                <p>Extend Uninitialized Enclave Measurement by 256 Bytes</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_einit.html'
+                                  title='x86::sgx::encls_einit'>encls_einit</a></td>
+                           <td class='docblock short'>
+                                <p>Initialize an Enclave for Execution</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_eldb.html'
+                                  title='x86::sgx::encls_eldb'>encls_eldb</a></td>
+                           <td class='docblock short'>
+                                <p>Loads and verifies an EPC page and marks the page as blocked.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_eldu.html'
+                                  title='x86::sgx::encls_eldu'>encls_eldu</a></td>
+                           <td class='docblock short'>
+                                <p>Loads, verifies an EPC page and marks the page as unblocked.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_emodpr.html'
+                                  title='x86::sgx::encls_emodpr'>encls_emodpr</a></td>
+                           <td class='docblock short'>
+                                <p>Restrict the Permissions of an EPC Page.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_emodt.html'
+                                  title='x86::sgx::encls_emodt'>encls_emodt</a></td>
+                           <td class='docblock short'>
+                                <p>Change the Type of an EPC Page.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_epa.html'
+                                  title='x86::sgx::encls_epa'>encls_epa</a></td>
+                           <td class='docblock short'>
+                                <p>Add Version Array.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_eremove.html'
+                                  title='x86::sgx::encls_eremove'>encls_eremove</a></td>
+                           <td class='docblock short'>
+                                <p>Remove a page from the EPC.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_etrack.html'
+                                  title='x86::sgx::encls_etrack'>encls_etrack</a></td>
+                           <td class='docblock short'>
+                                <p>Activates EBLOCK Checks.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.encls_ewb.html'
+                                  title='x86::sgx::encls_ewb'>encls_ewb</a></td>
+                           <td class='docblock short'>
+                                <p>Invalidate an EPC Page and Write out to Main Memory.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.enclu_eaccept.html'
+                                  title='x86::sgx::enclu_eaccept'>enclu_eaccept</a></td>
+                           <td class='docblock short'>
+                                <p>Accept Changes to an EPC Page.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.enclu_eacceptcopy.html'
+                                  title='x86::sgx::enclu_eacceptcopy'>enclu_eacceptcopy</a></td>
+                           <td class='docblock short'>
+                                <p>Initialize a Pending Page.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.enclu_eenter.html'
+                                  title='x86::sgx::enclu_eenter'>enclu_eenter</a></td>
+                           <td class='docblock short'>
+                                <p>Enters an Enclave.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.enclu_eexit.html'
+                                  title='x86::sgx::enclu_eexit'>enclu_eexit</a></td>
+                           <td class='docblock short'>
+                                <p>Exits an Enclave.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.enclu_egetkey.html'
+                                  title='x86::sgx::enclu_egetkey'>enclu_egetkey</a></td>
+                           <td class='docblock short'>
+                                <p>Retrieves a Cryptographic Key.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.enclu_emodepe.html'
+                                  title='x86::sgx::enclu_emodepe'>enclu_emodepe</a></td>
+                           <td class='docblock short'>
+                                <p>Extend an EPC Page Permissions.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.enclu_ereport.html'
+                                  title='x86::sgx::enclu_ereport'>enclu_ereport</a></td>
+                           <td class='docblock short'>
+                                <p>Create a Cryptographic Report of the Enclave.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.enclu_eresume.html'
+                                  title='x86::sgx::enclu_eresume'>enclu_eresume</a></td>
+                           <td class='docblock short'>
+                                <p>Re-Enters an Enclave.</p>
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "x86";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

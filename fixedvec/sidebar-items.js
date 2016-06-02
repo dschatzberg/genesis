@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ErrorKind",""]],"macro":[["alloc_stack!","Convenience macro for use with `FixedVec`. Allocates the specified number of elements of specified type on the stack."]],"struct":[["FixedVec",""],["Iter","Immutable slice iterator"],["IterMut","Mutable slice iterator."]],"type":[["Result",""]]});

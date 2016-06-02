@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["SpanlessEq","Type used to check whether two ast are the same. This is different from the operator `==` on ast types as this operator would compare true equality with ID and span."],["SpanlessHash","Type used to hash an ast element. This is different from the `Hash` trait on ast types as this trait would consider IDs and spans."]]});

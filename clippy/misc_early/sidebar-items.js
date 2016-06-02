@@ -1,0 +1,1 @@
+initSidebarItems({"static":[["DUPLICATE_UNDERSCORE_ARGUMENT",""],["REDUNDANT_CLOSURE_CALL",""],["UNNEEDED_FIELD_PATTERN",""]],"struct":[["MiscEarly",""]]});

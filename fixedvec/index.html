@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `fixedvec` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, fixedvec">
+
+    <title>fixedvec - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'fixedvec', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>fixedvec</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-0' class='srclink' href='../src/fixedvec/lib.rs.html#26-1018' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Heapless Vec implementation using only libcore</p>
+
+<p>When developing for certain types of systems, especially embedded systems,
+it is desirable to avoid the non-determinism that can be introduced by
+using a heap. A commonly used data structure is a &quot;buffer&quot; - a
+preallocated chunk of memory, either in static memory or on the stack.</p>
+
+<p>Thanks to the extensibility of Rust, it is possible to have a datatype
+that performs <em>almost</em> like the libstd <code>Vec</code> type, without requiring a
+heap and while only using libcore.</p>
+
+<h1 id='differences-from-stdvecvec' class='section-header'><a href='#differences-from-stdvecvec'>Differences from <code>std::vec::Vec</code></a></h1>
+<p>For now, <code>FixedVec</code> only works for types that implement <code>Copy</code>. This
+requirement will be lifted in the future, but for now it is the most
+straightforward way to get to a minimum viable product.</p>
+
+<p>Although every effort has been made to mimic the functionality of <code>Vec</code>,
+this is not a perfect clone. Specifically, functions that require memory
+allocation are not included. There are also a few functions where the type
+signatures are different - usually to add a <code>Result</code> that indicates whether
+or not adding an element was successful.</p>
+
+<p>Note that the <code>Vec</code> functionality of panicking when an invalid index is
+accessed has been preserved. Note that this is true <em>even if the index is
+valid for the underlying memory</em>. So, for example, if a <code>FixedVec</code> were
+allocated with 10 elements, and 3 new elements were pushed to it, accessing
+index 5 would panic, even though accessing that memory would be safe.</p>
+
+<h2 id='functions-with-different-signatures' class='section-header'><a href='#functions-with-different-signatures'>Functions with different signatures</a></h2>
+<p>The following functions have different signatures than their equivalents in
+<code>Vec</code>.</p>
+
+<ul>
+<li><code>new</code>: Self-explanatory - instantiating a different object</li>
+<li><code>push</code>, <code>push_all</code>, <code>insert</code>: Functions that add elements return a Result
+indicating if the result was successful.</li>
+<li><code>map_in_place</code>: Similar to <code>Vec</code> <code>map_in_place</code>, except there is no
+coercion of the types.</li>
+</ul>
+
+<h2 id='functions-in-fixedvec-not-in-vec' class='section-header'><a href='#functions-in-fixedvec-not-in-vec'>Functions in <code>FixedVec</code> not in <code>Vec</code></a></h2>
+<ul>
+<li><code>available</code>: Convenience function for checking remaining space.</li>
+<li><code>iter</code>: <code>FixedVec</code> cannot implement <code>IntoIterator</code> because the type
+signature of that trait requires taking ownership of the underlying
+struct. Since <code>FixedVec</code> keeps a reference to its backing store,
+ownership is not its to give. It&#39;s possible I&#39;m just being dense and this
+is possible - I&#39;d love to be proven wrong.</li>
+</ul>
+
+<h2 id='functions-in-vec-excluded-from-fixedvec' class='section-header'><a href='#functions-in-vec-excluded-from-fixedvec'>Functions in <code>Vec</code> excluded from <code>FixedVec</code></a></h2>
+<p>The following <code>Vec</code> functions do not exist in <code>FixedVec</code> because they deal
+with allocating or reserving memory - a step that is done up-front in
+<code>FixedVec</code>.</p>
+
+<ul>
+<li><code>with_capacity</code></li>
+<li><code>from_raw_parts</code></li>
+<li><code>from_raw_buffer</code></li>
+<li><code>reserve</code></li>
+<li><code>reserve_exact</code></li>
+<li><code>shrink_to_fit</code></li>
+<li><code>into_boxed_slice</code></li>
+<li><code>truncate</code></li>
+<li><code>set_len</code></li>
+<li><code>append</code></li>
+<li><code>drain</code></li>
+<li><code>split_off</code></li>
+</ul>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Typical usage looks like the following:</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>lang_items</span>, <span class='ident'>libc</span>, <span class='ident'>start</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>no_std</span>]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>no_main</span>]</span>
+
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
+
+<span class='comment'>// Pull in fixedvec</span>
+<span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>fixedvec</span>;
+
+<span class='kw'>use</span> <span class='ident'>fixedvec</span>::<span class='ident'>FixedVec</span>;
+
+<span class='attribute'>#[<span class='ident'>no_mangle</span>]</span>
+<span class='kw'>pub</span> <span class='kw'>extern</span> <span class='kw'>fn</span> <span class='ident'>main</span>(<span class='ident'>argc</span>: <span class='ident'>i32</span>, <span class='ident'>argv</span>: <span class='op'>*</span><span class='kw'>const</span> <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>u8</span>) <span class='op'>-&gt;</span> <span class='ident'>i32</span> {
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>preallocated_space</span> <span class='op'>=</span> <span class='macro'>alloc_stack</span><span class='macro'>!</span>([<span class='ident'>u8</span>; <span class='number'>10</span>]);
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>vec</span> <span class='op'>=</span> <span class='ident'>FixedVec</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>preallocated_space</span>);
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>vec</span>.<span class='ident'>len</span>(), <span class='number'>0</span>);
+
+    <span class='ident'>vec</span>.<span class='ident'>push_all</span>(<span class='kw-2'>&amp;</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>]).<span class='ident'>unwrap</span>();
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>vec</span>.<span class='ident'>len</span>(), <span class='number'>3</span>);
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>vec</span>[<span class='number'>1</span>], <span class='number'>2</span>);
+
+    <span class='ident'>vec</span>[<span class='number'>1</span>] <span class='op'>=</span> <span class='number'>5</span>;
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>vec</span>[<span class='number'>1</span>], <span class='number'>5</span>);
+
+    <span class='number'>0</span>
+}
+
+<span class='comment'>// These functions and traits are usually provided by libstd: we have to</span>
+<span class='comment'>// provide them ourselves in no_std.</span>
+<span class='attribute'>#[<span class='ident'>lang</span> <span class='op'>=</span> <span class='string'>&quot;eh_personality&quot;</span>]</span> <span class='kw'>extern</span> <span class='string'>&quot;C&quot;</span> <span class='kw'>fn</span> <span class='ident'>eh_personality</span>() {}
+<span class='attribute'>#[<span class='ident'>lang</span> <span class='op'>=</span> <span class='string'>&quot;panic_fmt&quot;</span>]</span> <span class='kw'>extern</span> <span class='string'>&quot;C&quot;</span> <span class='kw'>fn</span> <span class='ident'>panic_fmt</span>() <span class='op'>-&gt;</span> <span class='op'>!</span> { <span class='kw'>loop</span> {} }</pre>
+</div><h2 id='macros' class='section-header'><a href="#macros">Macros</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='macro' href='macro.alloc_stack!.html'
+                                  title='fixedvec::alloc_stack!'>alloc_stack!</a></td>
+                           <td class='docblock short'>
+                                <p>Convenience macro for use with <code>FixedVec</code>. Allocates the specified number
+of elements of specified type on the stack.</p>
+                           </td>
+                       </tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.FixedVec.html'
+                                  title='fixedvec::FixedVec'>FixedVec</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Iter.html'
+                                  title='fixedvec::Iter'>Iter</a></td>
+                           <td class='docblock short'>
+                                <p>Immutable slice iterator</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.IterMut.html'
+                                  title='fixedvec::IterMut'>IterMut</a></td>
+                           <td class='docblock short'>
+                                <p>Mutable slice iterator.</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.ErrorKind.html'
+                                  title='fixedvec::ErrorKind'>ErrorKind</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='type' href='type.Result.html'
+                                  title='fixedvec::Result'>Result</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr></table><h2 id='impls' class='section-header'><a href="#impls">Implementations</a></h2>
+<table></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "fixedvec";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

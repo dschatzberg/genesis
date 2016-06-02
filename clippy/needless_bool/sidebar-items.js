@@ -1,0 +1,1 @@
+initSidebarItems({"static":[["BOOL_COMPARISON",""],["NEEDLESS_BOOL",""]],"struct":[["BoolComparison",""],["NeedlessBool",""]]});

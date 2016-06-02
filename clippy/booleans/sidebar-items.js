@@ -1,0 +1,1 @@
+initSidebarItems({"static":[["LOGIC_BUG",""],["NONMINIMAL_BOOL",""]],"struct":[["NonminimalBool",""]]});

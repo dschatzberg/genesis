@@ -1,0 +1,1 @@
+initSidebarItems({"static":[["ENUM_CLIKE_UNPORTABLE_VARIANT",""]],"struct":[["EnumClikeUnportableVariant",""]]});

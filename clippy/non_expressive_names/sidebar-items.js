@@ -1,0 +1,1 @@
+initSidebarItems({"static":[["MANY_SINGLE_CHAR_NAMES",""],["SIMILAR_NAMES",""]],"struct":[["NonExpressiveNames",""]]});

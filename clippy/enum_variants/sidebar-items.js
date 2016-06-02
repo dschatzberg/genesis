@@ -1,0 +1,1 @@
+initSidebarItems({"static":[["ENUM_VARIANT_NAMES",""]],"struct":[["EnumVariantNames",""]]});

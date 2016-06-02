@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["arch_init","Initial Rust entry point."],["interrupt_handler","Rust entry for all interrupts"]],"mod":[["mem","Architecture-specific memory management definitions"],["serial","Serial Port access"],["x86_64","x86_64 specific interfaces"]]});

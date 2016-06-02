@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `BootDevice` struct in crate `multiboot`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, BootDevice">
+
+    <title>multiboot::BootDevice - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>multiboot</a></p><script>window.sidebarCurrent = {name: 'BootDevice', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>multiboot</a>::<wbr><a class='struct' href=''>BootDevice</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-125' class='srclink' href='../src/multiboot/lib.rs.html#297-308' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct BootDevice {
+    pub drive: u8,
+    pub partition1: u8,
+    pub partition2: u8,
+    pub partition3: u8,
+}</pre><div class='docblock'><p>The ‘boot_device’ field.</p>
+
+<p>Partition numbers always start from zero. Unused partition
+bytes must be set to 0xFF. For example, if the disk is partitioned
+using a simple one-level DOS partitioning scheme, then
+‘part’ contains the DOS partition number, and ‘part2’ and ‘part3’
+are both 0xFF. As another example, if a disk is partitioned first into
+DOS partitions, and then one of those DOS partitions is subdivided
+into several BSD partitions using BSD&#39;s disklabel strategy, then ‘part1’
+contains the DOS partition number, ‘part2’ contains the BSD sub-partition
+within that DOS partition, and ‘part3’ is 0xFF.</p>
+</div><h2 class='fields'>Fields</h2>
+<table><tr class='stab '>
+                             <td id='structfield.drive'><code>drive</code></td><td><div class='docblock'><p>Contains the bios drive number as understood by
+the bios INT 0x13 low-level disk interface: e.g. 0x00 for the
+first floppy disk or 0x80 for the first hard disk.</p>
+</div></td></tr><tr class='stab '>
+                             <td id='structfield.partition1'><code>partition1</code></td><td><div class='docblock'><p>Specifies the top-level partition number.</p>
+</div></td></tr><tr class='stab '>
+                             <td id='structfield.partition2'><code>partition2</code></td><td><div class='docblock'><p>Specifies a sub-partition in the top-level partition</p>
+</div></td></tr><tr class='stab '>
+                             <td id='structfield.partition3'><code>partition3</code></td><td><div class='docblock'><p>Specifies a sub-partition in the 2nd-level partition</p>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../multiboot/struct.BootDevice.html' title='multiboot::BootDevice'>BootDevice</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-146' class='srclink' href='../src/multiboot/lib.rs.html#310-326' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.partition1_is_valid' class='method'><code>fn <a href='#method.partition1_is_valid' class='fnname'>partition1_is_valid</a>(&amp;self) -&gt; bool</code></h4>
+<div class='docblock'><p>Is partition1 a valid partition?</p>
+</div><h4 id='method.partition2_is_valid' class='method'><code>fn <a href='#method.partition2_is_valid' class='fnname'>partition2_is_valid</a>(&amp;self) -&gt; bool</code></h4>
+<div class='docblock'><p>Is partition2 a valid partition?</p>
+</div><h4 id='method.partition3_is_valid' class='method'><code>fn <a href='#method.partition3_is_valid' class='fnname'>partition3_is_valid</a>(&amp;self) -&gt; bool</code></h4>
+<div class='docblock'><p>Is partition3 a valid partition?</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../multiboot/struct.BootDevice.html' title='multiboot::BootDevice'>BootDevice</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-130' class='srclink' href='../src/multiboot/lib.rs.html#295' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../multiboot/struct.BootDevice.html' title='multiboot::BootDevice'>BootDevice</a></code></h4>
+<div class='docblock'><p>Returns a copy of the value. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
+</div><h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div></h4>
+<div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../multiboot/struct.BootDevice.html' title='multiboot::BootDevice'>BootDevice</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-137' class='srclink' href='../src/multiboot/lib.rs.html#295' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "multiboot";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>
