@@ -7,7 +7,7 @@ addons:
     - libelf-dev
     - libdw-dev
 rust:
-- nightly
+- nightly-2016-05-22
 before_script:
 - |
   pip install 'travis-cargo<0.2' --user &&
