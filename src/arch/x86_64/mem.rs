@@ -13,10 +13,26 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
 pub use x86::paging::*;
+use memory::{FrameAllocator, Page};
 
 use core::cmp::Ordering;
+use core::mem;
 use core::ops::{Add, Sub};
 use core::ptr::Unique;
+
+pub const PHYS_MAP: usize = 0xFFFF_FF80_0000_0000;
+pub const PHYS_LIMIT: u64 = 0x80_0000_0000;
+
+pub fn phys_to_virt(p: PAddr) -> VAddr {
+    debug_assert!(p.as_u64() < PHYS_LIMIT);
+    VAddr::from_usize(p.as_u64() as usize + PHYS_MAP)
+}
+
+pub type PageSlice = [u8; PAGE_SIZE as usize];
+
+pub unsafe fn frame_to_slice<'a>(frame: Frame) -> &'a mut PageSlice {
+    mem::transmute(phys_to_virt(frame.start_address()).as_usize())
+}
 
 /// A physical frame (page)
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -150,5 +166,71 @@ impl PageTable {
 
     pub fn get_mut(&mut self) -> &mut PML4 {
         unsafe { self.table.get_mut() }
+    }
+
+    pub fn map<'a, Allocator, F>(&'a mut self,
+                                 page: Page,
+                                 frame: Frame,
+                                 flags: PTEntry,
+                                 allocator: &Allocator,
+                                 f: F)
+        where Allocator: FrameAllocator,
+              F: Fn(Frame) -> &'a mut [u8; PAGE_SIZE as usize]
+    {
+        let pml4 = self.get_mut();
+        let pml4_idx = pml4_index(page.start_address());
+        if pml4[pml4_idx].is_empty() {
+            let frame = allocator.allocate_manual()
+                .expect("Could not allocate frame for PDPT");
+            for b in f(frame).iter_mut() {
+                *b = 0;
+            }
+            pml4[pml4_idx] = PML4Entry::new(frame.start_address(),
+                                            PML4_P | PML4_RW);
+        }
+        let pdpt: &mut PDPT = unsafe {
+            mem::transmute(f(Frame::down(pml4[pml4_idx].get_address())))
+        };
+        let pdpt_idx = pdpt_index(page.start_address());
+        if pdpt[pdpt_idx].is_empty() {
+            let frame = allocator.allocate_manual()
+                .expect("Could not allocate frame for PD");
+            for b in f(frame).iter_mut() {
+                *b = 0;
+            }
+            pdpt[pdpt_idx] = PDPTEntry::new(frame.start_address(),
+                                            PDPT_P | PDPT_RW);
+        }
+
+        let pd: &mut PD = unsafe {
+            mem::transmute(f(Frame::down(pdpt[pdpt_idx].get_address())))
+        };
+        let pd_idx = pd_index(page.start_address());
+        if pd[pd_idx].is_empty() {
+            let frame = allocator.allocate_manual()
+                .expect("Could not allocate frame for PT");
+            for b in f(frame).iter_mut() {
+                *b = 0;
+            }
+            pd[pd_idx] = PDEntry::new(frame.start_address(), PD_P | PD_RW);
+        }
+
+        let pt: &mut PT = unsafe {
+            mem::transmute(f(Frame::down(pd[pd_idx].get_address())))
+        };
+        let pt_idx = pt_index(page.start_address());
+        assert!(pt[pt_idx].is_empty());
+        pt[pt_idx] = PTEntry::new(frame.start_address(), flags);
+    }
+
+    pub fn map_device<'a, Allocator, F>(&'a mut self,
+                                        page: Page,
+                                        frame: Frame,
+                                        allocator: &Allocator,
+                                        f: F)
+        where Allocator: FrameAllocator,
+              F: Fn(Frame) -> &'a mut [u8; PAGE_SIZE as usize]
+    {
+        self.map(page, frame, PT_P | PT_G | PT_RW | PT_PCD, allocator, f)
     }
 }

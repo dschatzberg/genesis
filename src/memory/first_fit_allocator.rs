@@ -39,7 +39,7 @@ lazy_static! {
 
 impl FirstFitAllocator<'static> {
     pub fn get() -> &'static FirstFitAllocator<'static> {
-        &ALLOCATOR
+        &*ALLOCATOR
     }
 }
 

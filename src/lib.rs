@@ -12,7 +12,8 @@
 
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
-#![feature(asm, const_fn, lang_items, plugin, unique)]
+#![feature(asm, const_fn, drop_types_in_const, lang_items, plugin)]
+#![feature(type_ascription, unique)]
 #![no_std]
 
 #![deny(missing_docs,

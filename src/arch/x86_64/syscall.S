@@ -1,4 +1,4 @@
-// This file is part of Genesis.
+// Copyright Dan Schatzberg, 2015. This file is part of Genesis.
 
 // Genesis is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -12,19 +12,7 @@
 
 // You should have received a copy of the GNU Affero General Public License
 // along with Genesis.  If not, see <http://www.gnu.org/licenses/>.
-pub use super::x86::serial;
 
-mod apic;
-/// Loading and manipulating the x86_64 Global Descriptor Table
-mod gdt;
-/// Loading and manipulating the x86_64 Interrupt Descriptor Table
-mod idt;
-/// Architecture specific boot code.
-mod init;
-/// Memory management routines
-pub mod mem;
-mod pic;
-mod syscall;
-
-pub use self::init::arch_init;
-pub use self::idt::interrupt_handler;
+.global syscall_entry
+syscall_entry:
+        jmp syscall_entry

@@ -18,6 +18,7 @@ use spin;
 use x86::dtables::*;
 use x86::segmentation::*;
 use x86::task::*;
+use memory::VAddr;
 
 lazy_static! {
     static ref TSS: spin::RwLock<TaskStateSegment> = {
@@ -50,7 +51,7 @@ lazy_static! {
 }
 
 /// Reset the GDT
-pub unsafe fn reset(stack: u64) {
+pub unsafe fn reset(stack: VAddr) {
     let gdt_ptr = {
         let gdtp: *const _ = &*GDT;
         let gdt_size = (mem::size_of::<SegmentDescriptor>() * GDT.len() -
@@ -61,7 +62,7 @@ pub unsafe fn reset(stack: u64) {
         }
     };
     let mut tss = TSS.write();
-    tss.rsp[0] = stack;
+    tss.rsp[0] = stack.as_usize() as u64;
 
     lgdt(&gdt_ptr);
     load_cs(SegmentSelector::new(1));
